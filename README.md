@@ -1,5 +1,11 @@
 # VITA — Frontend
 
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![React Router](https://img.shields.io/badge/React_Router-CA4245?style=for-the-badge&logo=react-router&logoColor=white)
+![Campuslands](https://img.shields.io/badge/Proyecto-CAMPUSLANDS-orange?style=for-the-badge)
+
 Interfaz web de **V.I.T.A** (Virtual Interactive Training Academy), plataforma de cursos online.
 
 Consume la API REST del repositorio backend `VITA`.
