@@ -10,11 +10,11 @@ Proyecto 3 · CAMPUSLANDS
 
 | Capa | Tecnología |
 | --- | --- |
-| UI | Vue o React (a definir por el equipo) |
-| Enrutado | Vue Router / React Router |
-| Estado auth | Store / Context (token JWT + usuario) |
-| HTTP | Cliente con header `Authorization: Bearer` |
-| Estilos | A definir |
+| Build | Vite |
+| UI | React + TypeScript |
+| Enrutado | React Router (a integrar) |
+| Estado auth | Context / store (a integrar) |
+| HTTP | Cliente hacia la API (carpeta `src/api`) |
 
 ## Roles en la interfaz
 
@@ -36,12 +36,31 @@ Proyecto 3 · CAMPUSLANDS
 8. Estudiante — mis cursos
 9. Reportes (Admin / Instructor)
 
+## Estructura
+
+```
+src/
+├── api/          # Cliente HTTP y llamadas a endpoints
+├── components/   # Componentes reutilizables
+├── pages/        # Pantallas / vistas
+├── context/      # Auth y estado global
+├── routes/       # Definición de rutas y guards
+├── hooks/        # Hooks personalizados
+├── types/        # Tipos TypeScript
+├── assets/
+├── App.tsx
+├── main.tsx
+└── index.css
+```
+
+Las carpetas de dominio arrancan vacías (con `.gitkeep`) hasta implementar cada pantalla.
+
 ## Integración con la API
 
 Prefijo base (desarrollo):
 
 ```
-http://localhost:<puerto-api>/api
+http://localhost:5044/api
 ```
 
 Autenticación:
@@ -50,37 +69,27 @@ Autenticación:
 Authorization: Bearer <token>
 ```
 
-Endpoints clave:
-
-- `POST /api/auth/login`
-- `POST /api/auth/register`
-- `GET /api/auth/me`
-- `POST /api/auth/logout`
-- Recursos de cursos, lecciones, inscripciones, categorías, usuarios y reportes según contrato del backend
-
 ## Variables de entorno
 
-Ejemplo (ajustar al framework elegido):
+Copiar `.env.example` a `.env`:
 
 ```
-VITE_API_URL=http://localhost:<puerto-api>/api
-```
-
-o
-
-```
-REACT_APP_API_URL=http://localhost:<puerto-api>/api
+VITE_API_URL=http://localhost:5044/api
 ```
 
 No commitear secretos ni tokens.
 
 ## Cómo ejecutar
 
-Pendiente de scaffold del proyecto.
-
 ```bash
 npm install
 npm run dev
+```
+
+App en:
+
+```
+http://localhost:5173
 ```
 
 ## Reglas de UI
