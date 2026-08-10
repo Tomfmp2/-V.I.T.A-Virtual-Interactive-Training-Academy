@@ -1,4 +1,4 @@
-import {create} from 'zustand';
+import React, { createContext, useContext, useState } from 'react';
 
 export interface User {
     id: string;
@@ -6,7 +6,7 @@ export interface User {
     role: string;
 }
 
-interface AuthState {
+interface AuthContextType {
     user: User | null;
     token: string | null;
     isAuthenticated: boolean;
@@ -14,18 +14,51 @@ interface AuthState {
     logout: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-    user: JSON.parse(localStorage.getItem('user') || 'null'),
-    token: localStorage.getItem('token'),
-    isAuthenticated: !!localStorage.getItem('token'),
-    login: (token, user) => {
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+function getStoredUser(): User | null {
+    try {
+        const raw = localStorage.getItem('user');
+        if (!raw) return null;
+        return JSON.parse(raw) as User;
+    } catch {
+        localStorage.removeItem('user');
+        return null;
+    }
+}
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const [user, setUser] = useState<User | null>(getStoredUser());
+    const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!localStorage.getItem('token'));
+
+    const login = (token: string, user: User) => {
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
-        set({ token, user, isAuthenticated: true});
-    },
-    logout: () => {
+        setToken(token);
+        setUser(user);
+        setIsAuthenticated(true);
+    };
+
+    const logout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        set({ token: null, user: null, isAuthenticated: false });
-    },
-}));
+        setToken(null);
+        setUser(null);
+        setIsAuthenticated(false);
+    };
+
+    return (
+        <AuthContext.Provider value={{ user, token, isAuthenticated, login, logout }}>
+            {children}
+        </AuthContext.Provider>
+    );
+};
+
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (context === undefined) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
+};
