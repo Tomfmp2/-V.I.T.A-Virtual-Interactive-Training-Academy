@@ -5,6 +5,7 @@ export const AppRouter = () => {
         <BrowserRouter>
             <Routes>
                 <Route path="/login" element={<div>Placeholder for Login</div>} />
+                <Route path="/register" element={<div>Placeholder for Register</div>} />
                 <Route path="/" element={<div>Placeholder for Dashboard</div>} />
                 <Route path="*" element={<Navigate to="/" />} />
             </Routes>
