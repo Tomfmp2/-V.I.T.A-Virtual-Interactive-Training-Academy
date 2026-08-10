@@ -1,0 +1,373 @@
+.loginContainer {
+  min-height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #f6f8fa;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  padding: 2rem 1rem 1rem 1rem;
+  box-sizing: border-box;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+.loginHeader {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.brandTitle {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #00684a;
+  letter-spacing: -0.5px;
+}
+
+.brandSub {
+  margin: 0.4rem 0 0 0;
+  color: #4a5568;
+  font-size: 0.95rem;
+}
+
+.loginCard {
+  width: 100%;
+  max-width: 400px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 2.2rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  border: 1px solid #edf2f7;
+  box-sizing: border-box;
+}
+
+.cardTitle {
+  margin: 0;
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1a202c;
+}
+
+.cardSub {
+  margin: 0.3rem 0 1.5rem 0;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #718096;
+}
+
+.errorBanner {
+  padding: 0.75rem;
+  margin-bottom: 1.5rem;
+  background-color: #fff5f5;
+  color: #e53e3e;
+  border: 1px solid #fed7d7;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.googleLoginContainer {
+  display: flex;
+  justify-content: center;
+  margin: 1.5rem 0;
+}
+
+.googleLoginContainer iframe {
+  border-radius: 8px;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 1.5rem 0;
+  color: #a0aec0;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: #e2e8f0;
+}
+
+.dividerText {
+  padding: 0 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #a0aec0;
+}
+
+.loginForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.labelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #4a5568;
+  letter-spacing: 0.5px;
+}
+
+.forgotLink {
+  font-size: 0.75rem;
+  color: #00a86b;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.forgotLink:hover {
+  color: #008f5b;
+  text-decoration: underline;
+}
+
+.inputWrapper {
+  display: flex;
+  align-items: center;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.inputWrapper:focus-within {
+  border-color: #00a86b;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(0, 168, 107, 0.1);
+}
+
+.icon {
+  margin-right: 0.5rem;
+  font-size: 0.9rem;
+  color: #a0aec0;
+  transition: color 0.3s ease;
+  display: flex;
+  align-items: center;
+}
+
+.inputWrapper:focus-within .icon {
+  color: #00a86b;
+}
+
+.eyeToggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  margin-left: 0.5rem;
+  color: #a0aec0;
+  transition: color 0.3s ease;
+  display: flex;
+  align-items: center;
+}
+
+.eyeToggle:hover {
+  color: #00a86b;
+}
+
+.eyeToggle:focus {
+  outline: none;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem 0;
+  border: none;
+  background-color: transparent;
+  outline: none;
+  font-size: 0.9rem;
+  color: #2d3748;
+}
+
+.input::placeholder {
+  color: #a0aec0;
+}
+
+.button {
+  margin-top: 0.5rem;
+  width: 100%;
+  padding: 0.85rem;
+  background-color: #00a86b;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 168, 107, 0.2);
+}
+
+.button:hover:not(:disabled) {
+  background-color: #008f5b;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 168, 107, 0.3);
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.footerText {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.82rem;
+  color: #718096;
+}
+
+.registerLink {
+  color: #00a86b;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.registerLink:hover {
+  color: #008f5b;
+  text-decoration: underline;
+}
+
+.footer {
+  width: 100%;
+  max-width: 1000px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #edf2f7;
+  font-size: 0.75rem;
+  color: #a0aec0;
+}
+
+.footerLinks {
+  display: flex;
+  gap: 1.2rem;
+}
+
+.footerAnchor {
+  color: #718096;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footerAnchor:hover {
+  color: #00a86b;
+  text-decoration: underline;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .loginContainer {
+    padding: 1.5rem 1rem 1rem 1rem;
+  }
+  
+  .brandTitle {
+    font-size: 1.8rem;
+  }
+  
+  .brandSub {
+    font-size: 0.85rem;
+  }
+  
+  .loginCard {
+    padding: 2rem;
+    max-width: 100%;
+  }
+  
+  .cardTitle {
+    font-size: 1.3rem;
+  }
+  
+  .cardSub {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .loginContainer {
+    padding: 1rem 0.75rem 0.75rem 0.75rem;
+  }
+  
+  .brandTitle {
+    font-size: 1.5rem;
+  }
+  
+  .brandSub {
+    font-size: 0.8rem;
+  }
+  
+  .loginCard {
+    padding: 1.5rem;
+    border-radius: 10px;
+  }
+  
+  .cardTitle {
+    font-size: 1.2rem;
+  }
+  
+  .cardSub {
+    font-size: 0.75rem;
+  }
+  
+  .input {
+    font-size: 0.85rem;
+  }
+  
+  .button {
+    font-size: 0.9rem;
+    padding: 0.75rem;
+  }
+  
+  .footer {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
+  }
+  
+  .footerLinks {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .loginCard {
+    max-width: 450px;
+  }
+  
+  .brandTitle {
+    font-size: 2.2rem;
+  }
+  
+  .cardTitle {
+    font-size: 1.5rem;
+  }
+}
