@@ -83,10 +83,23 @@ export const RegisterPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
+    // 1. Validar campos vacíos
+    if (!name || !lastName || !email || !password || !confirmPassword) {
+      setErrorMessage('Por favor, completa todos los campos.');
+      return;
+    }
+
+    // 2. Validar que el correo tenga formato válido (al menos la @)
+    if (!email.includes('@')) {
+      setErrorMessage('Por favor, introduce un correo electrónico válido (debe incluir "@").');
+      return;
+    }
+
+    // 3. Validar que las contraseñas coincidan
     if (password !== confirmPassword) {
       setErrorMessage('Las contraseñas no coinciden.');
       return;
@@ -95,7 +108,7 @@ export const RegisterPage = () => {
     setLoading(true);
 
     try {
-      // 1. Registrar usuario enviando nombre y apellido (ajusta los nombres de las propiedades si tu C# usa 'nombre', 'apellido', etc.)
+      // 1. Registrar usuario
       await registerApi({ 
         nombre: name, 
         apellido: lastName, 
@@ -111,12 +124,12 @@ export const RegisterPage = () => {
       // Guardar token y usuario en AuthContext
       login(token, usuario);
 
-      // Redirigir
-      navigate('/');
+      // 3. Redirigir al Home privado
+      navigate('/home');
     } catch (err: any) {
       if (err instanceof AxiosError) {
         if (err.response?.status === 400) {
-          setErrorMessage('El correo ya está registrado o los datos son inválidos.');
+          setErrorMessage('La contraseña no cumple con los requisitos mínimos de seguridad o los datos son inválidos.');
         } else if (err.response?.status === 409) {
           setErrorMessage('El correo electrónico ya está en uso.');
         } else {
