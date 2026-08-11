@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './RegisterPage.css';
+import { AxiosError } from 'axios';
+import { registerApi, loginApi } from '../api/authApi';
 
 const UserIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -92,23 +94,31 @@ export const RegisterPage = () => {
     setLoading(true);
 
     try {
-      // Simulación de registro (frontend only) - para producción usar api.post('/auth/register')
-      const user = {
-        id: 'user_' + Date.now(),
-        email: email,
-        name: name,
-        role: 'student'
-      };
+      // 1. Registrar usuario en el backend
+      await registerApi({ nombre: name, email, password });
       
-      const token = 'token_' + Date.now();
+      // 2. Hacer login automático con las credenciales
+      const loginResponse = await loginApi({ email, password });
+      
+      const { token, usuario } = loginResponse;
 
-      // Guardar sesión en Context & localStorage
-      login(token, user);
+      // Guardar token y usuario en AuthContext
+      login(token, usuario);
 
-      // Redirigir a Home
+      // Redirigir
       navigate('/');
     } catch (err: any) {
-      setErrorMessage('Error al registrar la cuenta');
+      if (err instanceof AxiosError) {
+        if (err.response?.status === 400) {
+          setErrorMessage('El correo ya está registrado o los datos son inválidos.');
+        } else if (err.response?.status === 409) {
+          setErrorMessage('El correo electrónico ya está en uso.');
+        } else {
+          setErrorMessage('Ocurrió un error en el servidor. Intenta nuevamente.');
+        }
+      } else {
+        setErrorMessage('Error al conectar con el servidor.');
+      }
     } finally {
       setLoading(false);
     }

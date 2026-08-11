@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './LoginPage.css';
+import { AxiosError } from 'axios';
+import api from '../api/http';
 
 const MailIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -76,28 +78,33 @@ export const LoginPage = () => {
     setLoading(true);
 
     try {
-      // Simulación de login (frontend only) - para producción usar api.post('/auth/login')
-      const user = {
-        id: 'user_' + Date.now(),
-        email: email,
-        name: email.split('@')[0],
-        role: 'student'
-      };
+      // Consumo real de la API de backend
+      const response = await api.post('/auth/login', { email, password });
       
-      const token = 'token_' + Date.now();
+      const { token, usuario } = response.data;
 
-      // Guardar sesión en Context & localStorage
-      login(token, user);
+      // Guardar token y usuario en AuthContext
+      login(token, usuario);
 
-      // Redirigir a Home
+      // Redirigir
       navigate('/');
     } catch (err: any) {
-      setErrorMessage('Error al iniciar sesión');
+      if (err instanceof AxiosError) {
+        if (err.response?.status === 401) {
+          setErrorMessage('Correo o contraseña incorrectos.');
+        } else if (err.response?.status === 403) {
+          setErrorMessage('Tu usuario se encuentra inactivo.');
+        } else {
+          setErrorMessage('Ocurrió un error en el servidor. Intenta nuevamente.');
+        }
+      } else {
+        setErrorMessage('Error al conectar con el servidor.');
+      }
     } finally {
       setLoading(false);
     }
   };
-
+  
   return (
     <div className="pageContainer">
       {/* Columna Izquierda - Panel de Marca */}
