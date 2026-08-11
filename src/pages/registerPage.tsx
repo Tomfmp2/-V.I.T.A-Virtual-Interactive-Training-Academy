@@ -71,6 +71,7 @@ const ClockIcon = () => (
 
 export const RegisterPage = () => {
   const [name, setName] = useState('');
+  const [lastName, setLastName] = useState(''); // <-- Estado para el apellido añadido
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -94,8 +95,13 @@ export const RegisterPage = () => {
     setLoading(true);
 
     try {
-      // 1. Registrar usuario en el backend
-      await registerApi({ nombre: name, email, password });
+      // 1. Registrar usuario enviando nombre y apellido (ajusta los nombres de las propiedades si tu C# usa 'nombre', 'apellido', etc.)
+      await registerApi({ 
+        nombre: name, 
+        apellido: lastName, 
+        email, 
+        password 
+      });
       
       // 2. Hacer login automático con las credenciales
       const loginResponse = await loginApi({ email, password });
@@ -200,7 +206,7 @@ export const RegisterPage = () => {
             </div>
           )}
 
-          {/* Google Button (Static UI Only) */}
+          {/* Google Button */}
           <button className="googleButton" type="button">
             <svg width="20" height="20" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -217,9 +223,9 @@ export const RegisterPage = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="registerForm">
-            {/* Full Name field */}
+            {/* Name field */}
             <div className="inputGroup">
-              <label className="label">FULL NAME</label>
+              <label className="label">NAME</label>
               <div className="inputWrapper">
                 <span className="icon">
                   <UserIcon />
@@ -229,7 +235,25 @@ export const RegisterPage = () => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
-                  placeholder="Enter your full name"
+                  placeholder="Enter your name"
+                  className="input"
+                />
+              </div>
+            </div>
+
+            {/* Last Name field */}
+            <div className="inputGroup">
+              <label className="label">LAST NAME</label>
+              <div className="inputWrapper">
+                <span className="icon">
+                  <UserIcon />
+                </span>
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                  placeholder="Enter your last name"
                   className="input"
                 />
               </div>

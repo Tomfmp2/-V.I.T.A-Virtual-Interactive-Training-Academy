@@ -12,13 +12,14 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  token: string;
+  token: string;i
   expiraEn: number;
   usuario: User;
 }
 
 export interface RegisterRequest {
   nombre: string;
+  apellido: string;
   email: string;
   password: string;
 }
