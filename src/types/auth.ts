@@ -12,7 +12,7 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  token: string;i
+  token: string;
   expiraEn: number;
   usuario: User;
 }

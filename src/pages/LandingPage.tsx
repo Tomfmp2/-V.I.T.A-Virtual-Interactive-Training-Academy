@@ -1,8 +1,11 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './LandingPage.css';
 
 export const LandingPage = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   const handleSignIn = () => {
     navigate('/login');
@@ -11,6 +14,13 @@ export const LandingPage = () => {
   const handleGetStarted = () => {
     navigate('/register');
   };
+
+  // Si el usuario ya inició sesión y visita la Landing Page (/), lo redirigimos al Home
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/home');
+    }
+  }, [isAuthenticated, navigate]);
 
   return (
     <>
