@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Navbar } from '../components/Navbar';
 import './LandingPage.css';
 
 export const LandingPage = () => {
@@ -22,42 +23,67 @@ export const LandingPage = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  const courses = [
+    {
+      tag: 'Development',
+      weeks: '12 Semanas',
+      level: 'Avanzado',
+      title: 'Full-Stack Web Engineering',
+      description: 'Domina React, Node.js y TypeScript construyendo aplicaciones web completas de nivel empresarial.',
+      techs: ['React', 'Node.js', 'TypeScript'],
+    },
+    {
+      tag: 'Cloud',
+      weeks: '8 Semanas',
+      level: 'Intermedio',
+      title: 'Cloud & DevOps Infrastructure',
+      description: 'Aprende a desplegar y escalar aplicaciones usando Docker, Kubernetes y AWS.',
+      techs: ['Docker', 'Kubernetes', 'AWS'],
+    },
+    {
+      tag: 'Security',
+      weeks: '10 Semanas',
+      level: 'Principiante',
+      title: 'Cybersecurity & Secure Coding',
+      description: 'Protege aplicaciones y sistemas con prácticas de seguridad OWASP y pentesting.',
+      techs: ['OWASP', 'PenTesting'],
+    },
+    {
+      tag: 'Design',
+      weeks: '6 Semanas',
+      level: 'Intermedio',
+      title: 'UI/UX & Design Systems',
+      description: 'Crea interfaces profesionales con Figma, design tokens y Tailwind CSS.',
+      techs: ['Figma', 'Design Tokens', 'Tailwind'],
+    },
+    {
+      tag: 'Data AI',
+      weeks: '14 Semanas',
+      level: 'Avanzado',
+      title: 'AI & Machine Learning Operations',
+      description: 'Implementa modelos de IA y sistemas MLOps con Python y PyTorch.',
+      techs: ['Python', 'PyTorch', 'MLOps'],
+    },
+    {
+      tag: 'Backend',
+      weeks: '6 Semanas',
+      level: 'Intermedio',
+      title: 'Relational Databases & SQL Ops',
+      description: 'Domina bases de datos relacionales, optimización SQL y ORMs modernos.',
+      techs: ['MySQL', 'PostgreSQL', 'ORMs'],
+    },
+  ];
+
   return (
     <>
       {/* Navigation */}
-      <nav className="navigationBar">
-        <div className="navLeft">
-          <div className="logoIcon">V</div>
-          <span className="brandText">V.I.T.A. Academy</span>
-        </div>
-        <div className="navCenter">
-          <a href="#inicio" className="navLink">Inicio</a>
-          <a href="#quienes-somos" className="navLink">Quiénes Somos</a>
-          <a href="#cursos" className="navLink">Cursos</a>
-          <a href="#features" className="navLink">Metodología</a>
-          <a href="#plataforma" className="navLink">Plataforma</a>
-        </div>
-        <div className="navRight">
-          <button className="ghostButton" onClick={handleSignIn}>Sign In</button>
-          <button className="primaryButton" onClick={handleGetStarted}>Get Started →</button>
-        </div>
-      </nav>
-
+      <header className="navigationBar">
+        <Navbar />
+      </header>
       <div className="landingPage">
 
       {/* Hero Section */}
       <section className="heroSection" id="inicio">
-        <div className="heroPill">Precision Engineering for Mastery</div>
-        <h1 className="heroHeadline">
-          Aprende Ingeniería de Software al <span className="highlight">Máximo Nivel</span>
-        </h1>
-        <p className="heroSubtitle">
-          V.I.T.A. Academy es la plataforma de entrenamiento interactivo donde dominarás frontend, backend, arquitectura de software, DevOps y cloud computing con estándares de industria real.
-        </p>
-        <div className="ctaGroup">
-          <button className="primaryButton">Explorar Programas →</button>
-          <button className="secondaryButton">Acceso Alumnos</button>
-        </div>
         <div className="heroVisual">
           <div className="heroVisualSlide">
             <div className="heroVisualContentAnimated">
@@ -95,6 +121,16 @@ export const LandingPage = () => {
               <div style={{ fontSize: '16px', opacity: 0.9 }}>Automated Testing & Results</div>
             </div>
           </div>
+        </div>
+        <h1 className="heroHeadline">
+          Aprende Ingeniería de Software al <span className="highlight">Máximo Nivel</span>
+        </h1>
+        <p className="heroSubtitle">
+          V.I.T.A. Academy es la plataforma de entrenamiento interactivo donde dominarás frontend, backend, arquitectura de software, DevOps y cloud computing con estándares de industria real.
+        </p>
+        <div className="ctaGroup">
+          <button className="primaryButton" onClick={handleGetStarted}>Explorar Programas →</button>
+          <button className="secondaryButton" onClick={handleSignIn}>Acceso Alumnos</button>
         </div>
       </section>
 
@@ -168,101 +204,24 @@ export const LandingPage = () => {
           <p className="sectionSubtitle">Rutas completas diseñadas para dominar las stack tecnológicas más demandadas.</p>
         </div>
         <div className="coursesGrid">
-          <div className="courseCard">
-            <span className="courseTag">Development</span>
-            <div className="courseMeta">
-              <span>12 Semanas</span>
-              <span>•</span>
-              <span>Avanzado</span>
+          {courses.map((c) => (
+            <div key={c.title} className="courseCard">
+              <span className="courseTag">{c.tag}</span>
+              <div className="courseMeta">
+                <span>{c.weeks}</span>
+                <span>•</span>
+                <span>{c.level}</span>
+              </div>
+              <h3 className="courseTitle">{c.title}</h3>
+              <p className="courseDescription">{c.description}</p>
+              <div className="courseTechs">
+                {c.techs.map((t) => (
+                  <span key={t} className="techBadge">{t}</span>
+                ))}
+              </div>
+              <a href="#" className="courseLink">Ver Malla Curricular →</a>
             </div>
-            <h3 className="courseTitle">Full-Stack Web Engineering</h3>
-            <p className="courseDescription">Domina React, Node.js y TypeScript construyendo aplicaciones web completas de nivel empresarial.</p>
-            <div className="courseTechs">
-              <span className="techBadge">React</span>
-              <span className="techBadge">Node.js</span>
-              <span className="techBadge">TypeScript</span>
-            </div>
-            <a href="#" className="courseLink">Ver Malla Curricular →</a>
-          </div>
-          <div className="courseCard">
-            <span className="courseTag">Cloud</span>
-            <div className="courseMeta">
-              <span>8 Semanas</span>
-              <span>•</span>
-              <span>Intermedio</span>
-            </div>
-            <h3 className="courseTitle">Cloud & DevOps Infrastructure</h3>
-            <p className="courseDescription">Aprende a desplegar y escalar aplicaciones usando Docker, Kubernetes y AWS.</p>
-            <div className="courseTechs">
-              <span className="techBadge">Docker</span>
-              <span className="techBadge">Kubernetes</span>
-              <span className="techBadge">AWS</span>
-            </div>
-            <a href="#" className="courseLink">Ver Malla Curricular →</a>
-          </div>
-          <div className="courseCard">
-            <span className="courseTag">Security</span>
-            <div className="courseMeta">
-              <span>10 Semanas</span>
-              <span>•</span>
-              <span>Principiante</span>
-            </div>
-            <h3 className="courseTitle">Cybersecurity & Secure Coding</h3>
-            <p className="courseDescription">Protege aplicaciones y sistemas con prácticas de seguridad OWASP y pentesting.</p>
-            <div className="courseTechs">
-              <span className="techBadge">OWASP</span>
-              <span className="techBadge">PenTesting</span>
-            </div>
-            <a href="#" className="courseLink">Ver Malla Curricular →</a>
-          </div>
-          <div className="courseCard">
-            <span className="courseTag">Design</span>
-            <div className="courseMeta">
-              <span>6 Semanas</span>
-              <span>•</span>
-              <span>Intermedio</span>
-            </div>
-            <h3 className="courseTitle">UI/UX & Design Systems</h3>
-            <p className="courseDescription">Crea interfaces profesionales con Figma, design tokens y Tailwind CSS.</p>
-            <div className="courseTechs">
-              <span className="techBadge">Figma</span>
-              <span className="techBadge">Design Tokens</span>
-              <span className="techBadge">Tailwind</span>
-            </div>
-            <a href="#" className="courseLink">Ver Malla Curricular →</a>
-          </div>
-          <div className="courseCard">
-            <span className="courseTag">Data AI</span>
-            <div className="courseMeta">
-              <span>14 Semanas</span>
-              <span>•</span>
-              <span>Avanzado</span>
-            </div>
-            <h3 className="courseTitle">AI & Machine Learning Operations</h3>
-            <p className="courseDescription">Implementa modelos de IA y sistemas MLOps con Python y PyTorch.</p>
-            <div className="courseTechs">
-              <span className="techBadge">Python</span>
-              <span className="techBadge">PyTorch</span>
-              <span className="techBadge">MLOps</span>
-            </div>
-            <a href="#" className="courseLink">Ver Malla Curricular →</a>
-          </div>
-          <div className="courseCard">
-            <span className="courseTag">Backend</span>
-            <div className="courseMeta">
-              <span>6 Semanas</span>
-              <span>•</span>
-              <span>Intermedio</span>
-            </div>
-            <h3 className="courseTitle">Relational Databases & SQL Ops</h3>
-            <p className="courseDescription">Domina bases de datos relacionales, optimización SQL y ORMs modernos.</p>
-            <div className="courseTechs">
-              <span className="techBadge">MySQL</span>
-              <span className="techBadge">PostgreSQL</span>
-              <span className="techBadge">ORMs</span>
-            </div>
-            <a href="#" className="courseLink">Ver Malla Curricular →</a>
-          </div>
+          ))}
         </div>
       </section>
 
