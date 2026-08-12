@@ -196,12 +196,12 @@ button {
   height: auto;
 }
 
-.login-left-welcome {
-  display: flex;
-  flex-direction: column;
-  gap: 0.9rem;
+/* Floating logo container (hidden by default) */
+.brand-logo svg {
+  display: block;
+  width: 100%;
+  height: auto;
 }
-
 .brand-heading {
   color: #F8FAFC;
   font-size: clamp(3rem, 4vw, 3.5rem);
@@ -216,6 +216,44 @@ button {
   line-height: 1.6;
   max-width: 400px;
   margin-top: 16px;
+}
+
+/* When auth-container is in register mode, show the brand/logo at the top-right
+   of the visual panel while keeping the same markup. Keep mobile behavior unchanged. */
+.auth-container.mode-register .login-left-content {
+  align-items: flex-end;
+  padding-right: 70px;
+  padding-left: 48px;
+  padding-top: 70px;
+}
+
+.auth-container.mode-register .brand-logo {
+  margin-bottom: 20px;
+  max-width: 220px;
+}
+
+.auth-container.mode-register .login-left-welcome {
+  align-items: flex-end;
+  text-align: right;
+}
+
+@media (max-width: 767.98px) {
+  /* On mobile revert to original left-aligned layout */
+  .auth-container.mode-register .login-left-content {
+    align-items: flex-start;
+    padding-right: 48px;
+    padding-top: 48px;
+  }
+
+  .auth-container.mode-register .login-left-welcome {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  /* On mobile keep normal inline logo behavior */
+  .auth-container.mode-register .login-left-content .brand-logo {
+    display: block;
+  }
 }
 
 .login-right-panel {
@@ -375,6 +413,48 @@ button {
 .field-input-group:focus-within {
   border-color: #00AFFF;
   box-shadow: 0 0 0 1px rgba(0, 175, 255, 0.35);
+}
+
+.field-input-group.error {
+  border-color: #FB7185; /* soft red */
+  box-shadow: 0 0 0 1px rgba(251, 113, 133, 0.12);
+}
+
+.form-error {
+  color: #FEE2E2;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(251, 113, 133, 0.12);
+  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  margin-bottom: 0.75rem;
+}
+
+.form-success {
+  color: #ECFDF5;
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px solid rgba(16, 185, 129, 0.08);
+  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Responsive two-column wrapper for name + last name on register */
+.two-col-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .two-col-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  .two-col-row .field-group {
+    margin-bottom: 0; /* keep consistent spacing controlled by gap */
+  }
 }
 
 .field-input:-webkit-autofill,

@@ -38,26 +38,41 @@ export const LoginForm = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; form?: string }>({});
+  const [touched, setTouched] = useState<{ email?: boolean; password?: boolean }>({});
   const [loading, setLoading] = useState(false);
+  const [formStatus, setFormStatus] = useState<{ type: 'error' | 'success' | null; message?: string }>({ type: null });
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const validate = () => {
     const nextErrors: typeof errors = {};
-
     if (!email.trim()) {
-      nextErrors.email = 'Email es obligatorio';
+      nextErrors.email = 'El correo electrónico es obligatorio.';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      nextErrors.email = 'Ingresa un email válido';
+      nextErrors.email = 'Ingresa un correo electrónico válido.';
     }
 
     if (!password.trim()) {
-      nextErrors.password = 'Contraseña obligatoria';
+      nextErrors.password = 'La contraseña es obligatoria.';
     }
+
+    return nextErrors;
+  };
+
+  const handleBlur = (field: 'email' | 'password') => {
+    setTouched((t) => ({ ...t, [field]: true }));
+    const next = validate();
+    setErrors((prev) => ({ ...prev, [field]: next[field] }));
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setFormStatus({ type: null });
+    const nextErrors = validate();
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
+      setTouched({ email: true, password: true });
       return;
     }
 
@@ -68,23 +83,35 @@ export const LoginForm = () => {
       const loginResponse = await loginApi({ email, password });
       const { token, usuario } = loginResponse;
       login(token, usuario);
+      setFormStatus({ type: 'success', message: 'Inicio de sesión exitoso.' });
       navigate('/home');
     } catch (error: unknown) {
       const nextFormErrors: typeof errors = {};
 
       if (error instanceof AxiosError) {
-        if (error.response?.status === 401) {
-          nextFormErrors.form = 'Credenciales incorrectas. Verifica tu email y contraseña.';
-        } else if (error.response?.status === 400) {
-          nextFormErrors.form = 'Los datos ingresados no son válidos.';
+        const status = error.response?.status;
+        if (status === 401) {
+          nextFormErrors.form = 'El correo o la contraseña son incorrectos.';
+        } else if (status === 404) {
+          nextFormErrors.form = 'Usuario inexistente.';
+        } else if (status === 403) {
+          nextFormErrors.form = 'Sesión rechazada. Verifica tu acceso.';
+        } else if (status === 400) {
+          nextFormErrors.form = 'Datos inválidos. Revisa los campos e intenta nuevamente.';
+        } else if (status === 503) {
+          nextFormErrors.form = 'No pudimos conectar con el servidor. Inténtalo nuevamente.';
+        } else if (typeof status === 'number' && status >= 500) {
+          nextFormErrors.form = 'No pudimos iniciar sesión en este momento. Inténtalo nuevamente.';
         } else {
-          nextFormErrors.form = 'Error del servidor. Intenta nuevamente más tarde.';
+          nextFormErrors.form = error.response?.data?.message || 'Ocurrió un error. Inténtalo nuevamente.';
         }
       } else {
-        nextFormErrors.form = 'Error al conectar con el servidor. Intenta de nuevo.';
+        nextFormErrors.form = 'No pudimos conectar con el servidor. Inténtalo nuevamente.';
       }
 
       setErrors(nextFormErrors);
+      setFormStatus({ type: 'error', message: nextFormErrors.form });
+      console.error('Login error:', error);
     } finally {
       setLoading(false);
     }
@@ -116,12 +143,12 @@ export const LoginForm = () => {
         <span>O CONTINÚA CON EMAIL</span>
       </div>
 
-      <form onSubmit={handleSubmit} className="login-form-fields">
+      <form onSubmit={handleSubmit} className="login-form-fields" noValidate>
         <div className="field-group">
           <div className="field-header">
             <label htmlFor="email" className="field-label">Email *</label>
           </div>
-          <div className="field-input-group">
+          <div className={`field-input-group ${errors.email ? 'error' : ''}`}>
             <span className="field-icon">
               <MailIcon />
             </span>
@@ -130,18 +157,24 @@ export const LoginForm = () => {
               type="email"
               placeholder="ejemplo@correo.com"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                if (touched.email) setErrors((prev) => ({ ...prev, email: validate().email }));
+              }}
+              onBlur={() => handleBlur('email')}
               className="field-input"
+              aria-invalid={!!errors.email}
+              aria-describedby={errors.email ? 'email-error' : undefined}
             />
           </div>
-          {errors.email && <p className="field-error">{errors.email}</p>}
+          {errors.email && <p className="field-error" id="email-error">{errors.email}</p>}
         </div>
 
         <div className="field-group">
           <div className="field-header">
             <label htmlFor="password" className="field-label">Contraseña *</label>
           </div>
-          <div className="field-input-group">
+          <div className={`field-input-group ${errors.password ? 'error' : ''}`}>
             <span className="field-icon">
               <LockIcon />
             </span>
@@ -150,8 +183,14 @@ export const LoginForm = () => {
               type={showPassword ? 'text' : 'password'}
               placeholder="Ingrese su contraseña"
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                if (touched.password) setErrors((prev) => ({ ...prev, password: validate().password }));
+              }}
+              onBlur={() => handleBlur('password')}
               className="field-input"
+              aria-invalid={!!errors.password}
+              aria-describedby={errors.password ? 'password-error' : undefined}
             />
             <button
               type="button"
@@ -162,15 +201,18 @@ export const LoginForm = () => {
               {showPassword ? <EyeOffIcon /> : <EyeIcon />}
             </button>
           </div>
-          {errors.password && <p className="field-error">{errors.password}</p>}
+          {errors.password && <p className="field-error" id="password-error">{errors.password}</p>}
 
           <div className="form-footer-link">
             <Link to="/forgot-password" className="forgot-link">¿Olvidé mi contraseña?</Link>
           </div>
         </div>
 
+        {formStatus.type === 'error' && <div className="form-error" role="alert">{formStatus.message}</div>}
+        {formStatus.type === 'success' && <div className="form-success" role="status">{formStatus.message}</div>}
+
         <button type="submit" className="submit-button" disabled={loading}>
-          {loading ? 'Cargando...' : 'Iniciar Sesión'}
+          {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
         </button>
 
         <p className="register-caption">

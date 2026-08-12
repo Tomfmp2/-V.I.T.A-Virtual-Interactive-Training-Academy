@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './RegisterPage.css';
+import './LoginPage.css';
+import { AuthLayout } from '../components/auth/AuthLayout';
 import { AxiosError } from 'axios';
 import { registerApi, loginApi } from '../api/authApi';
 
@@ -40,329 +42,265 @@ const EyeOffIcon = () => (
   </svg>
 );
 
-const UsersIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-    <circle cx="9" cy="7" r="4"></circle>
-    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-  </svg>
-);
-
-const VideoIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <polygon points="23 7 16 12 23 17 23 7"></polygon>
-    <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
-  </svg>
-);
-
-const StarIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-  </svg>
-);
-
-const ClockIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10"></circle>
-    <polyline points="12 6 12 12 16 14"></polyline>
-  </svg>
-);
+// Decorative icons removed because they are not used in this file.
 
 export const RegisterPage = () => {
   const [name, setName] = useState('');
-  const [lastName, setLastName] = useState(''); // <-- Estado para el apellido añadido
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errors, setErrors] = useState<{ name?: string; lastName?: string; email?: string; password?: string; confirmPassword?: string; form?: string }>({});
+  const [touched, setTouched] = useState<{ [k: string]: boolean }>({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [formStatus, setFormStatus] = useState<{ type: 'error' | 'success' | null; message?: string }>({ type: null });
 
   const { login } = useAuth();
   const navigate = useNavigate();
 
-const handleSubmit = async (e: React.FormEvent) => {
+  const validate = () => {
+    const next: typeof errors = {};
+    if (!name.trim()) next.name = 'El nombre es obligatorio.';
+    if (!lastName.trim()) next.lastName = 'El apellido es obligatorio.';
+    if (!email.trim()) next.email = 'El correo electrónico es obligatorio.';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) next.email = 'Ingresa un correo electrónico válido.';
+    if (!password) next.password = 'La contraseña es obligatoria.';
+    else if (password.length < 8) next.password = 'La contraseña debe tener al menos 8 caracteres.';
+    if (!confirmPassword) next.confirmPassword = 'Confirma tu contraseña.';
+    else if (password && confirmPassword && password !== confirmPassword) next.confirmPassword = 'Las contraseñas no coinciden.';
+    return next;
+  };
+
+  const handleBlur = (field: string) => {
+    setTouched((t) => ({ ...t, [field]: true }));
+    const next = validate();
+    setErrors((prev) => ({ ...prev, [field]: next[field as keyof typeof next] }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage(null);
-
-    // 1. Validar campos vacíos
-    if (!name || !lastName || !email || !password || !confirmPassword) {
-      setErrorMessage('Por favor, completa todos los campos.');
+    setFormStatus({ type: null });
+    const next = validate();
+    if (Object.keys(next).length > 0) {
+      setErrors(next);
+      setTouched({ name: true, lastName: true, email: true, password: true, confirmPassword: true });
       return;
     }
 
-    // 2. Validar que el correo tenga formato válido (al menos la @)
-    if (!email.includes('@')) {
-      setErrorMessage('Por favor, introduce un correo electrónico válido (debe incluir "@").');
-      return;
-    }
-
-    // 3. Validar que las contraseñas coincidan
-    if (password !== confirmPassword) {
-      setErrorMessage('Las contraseñas no coinciden.');
-      return;
-    }
-
+    setErrors({});
     setLoading(true);
 
     try {
-      // 1. Registrar usuario
-      await registerApi({ 
-        nombre: name, 
-        apellido: lastName, 
-        email, 
-        password 
-      });
-      
-      // 2. Hacer login automático con las credenciales
-      const loginResponse = await loginApi({ email, password });
-      
-      const { token, usuario } = loginResponse;
+      await registerApi({ nombre: name, apellido: lastName, email, password });
+      setFormStatus({ type: 'success', message: 'Cuenta creada correctamente.' });
 
-      // Guardar token y usuario en AuthContext
-      login(token, usuario);
-
-      // 3. Redirigir al Home privado
-      navigate('/home');
-    } catch (err: any) {
+      // login automático (mantener comportamiento actual)
+      try {
+        const loginResponse = await loginApi({ email, password });
+        const { token, usuario } = loginResponse;
+        login(token, usuario);
+        setTimeout(() => navigate('/home'), 700);
+      } catch (loginErr) {
+        // Si el login automático falla, redirigir a /login mostrando mensaje
+        console.error('Auto login falló tras registro:', loginErr);
+        setFormStatus({ type: 'success', message: 'Cuenta creada correctamente.' });
+        setTimeout(() => navigate('/login'), 900);
+      }
+    } catch (err: unknown) {
+      const nextErrors: typeof errors = {};
       if (err instanceof AxiosError) {
-        if (err.response?.status === 400) {
-          setErrorMessage('La contraseña no cumple con los requisitos mínimos de seguridad o los datos son inválidos.');
-        } else if (err.response?.status === 409) {
-          setErrorMessage('El correo electrónico ya está en uso.');
+        const status = err.response?.status;
+        if (status === 409) {
+          nextErrors.form = 'Este correo electrónico ya está registrado.';
+        } else if (status === 400 || status === 422) {
+          nextErrors.form = 'Los datos enviados son inválidos. Revisa los campos.';
+        } else if (typeof status === 'number' && status >= 500) {
+          nextErrors.form = 'No pudimos crear tu cuenta en este momento. Inténtalo nuevamente.';
         } else {
-          setErrorMessage('Ocurrió un error en el servidor. Intenta nuevamente.');
+          nextErrors.form = err.response?.data?.message || 'Ocurrió un error. Intenta nuevamente.';
         }
       } else {
-        setErrorMessage('Error al conectar con el servidor.');
+        nextErrors.form = 'No pudimos conectar con el servidor. Inténtalo nuevamente.';
       }
+
+      setErrors(nextErrors);
+      setFormStatus({ type: 'error', message: nextErrors.form });
+      console.error('Register error:', err);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="pageContainer">
-      {/* Columna Izquierda - Panel de Marca */}
-      <div className="leftPanel">
-        <div className="brandSection">
-          <div className="logoContainer">
-            <svg className="logoSvg" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="48" height="48" rx="8" fill="#10B981"/>
-              <path d="M16 14L34 24L16 34V14Z" fill="white"/>
-            </svg>
-            <div className="logoBrand">
-              VITA<span className="logoDot">.</span> LEARNING HUB
-            </div>
-          </div>
-          <h1 className="brandTitle">Impulsa tu aprendizaje con V.I.T.A.</h1>
-          <p className="brandSubtitle">
-            La plataforma interactiva donde estudiantes y tutores conectan en tiempo real para alcanzar el dominio técnico.
-          </p>
-        </div>
-
-        <div className="metricsGrid">
-          <div className="metricCard">
-            <div className="metricIcon">
-              <UsersIcon />
-            </div>
-            <div className="metricContent">
-              <div className="metricValue">+1,000</div>
-              <div className="metricLabel">Estudiantes impulsando su carrera profesional</div>
-            </div>
-          </div>
-          <div className="metricCard">
-            <div className="metricIcon">
-              <VideoIcon />
-            </div>
-            <div className="metricContent">
-              <div className="metricValue">+500</div>
-              <div className="metricLabel">Tutorías en vivo y sesiones personalizadas completadas</div>
-            </div>
-          </div>
-          <div className="metricCard">
-            <div className="metricIcon">
-              <StarIcon />
-            </div>
-            <div className="metricContent">
-              <div className="metricValue">99.8%</div>
-              <div className="metricLabel">Satisfacción y resolución efectiva de dudas</div>
-            </div>
-          </div>
-          <div className="metricCard">
-            <div className="metricIcon">
-              <ClockIcon />
-            </div>
-            <div className="metricContent">
-              <div className="metricValue">24/7</div>
-              <div className="metricLabel">Acceso continuo a tu panel de aprendizaje y recursos</div>
-            </div>
+    <AuthLayout mode="register">
+      <div className="login-form-panel">
+        <div className="login-form-head">
+          <div>
+            <p className="login-form-label">CREAR CUENTA</p>
+            <h2 className="login-form-title">Comienza tu viaje</h2>
+            <p className="login-form-copy">Regístrate gratis y forma parte de la comunidad de aprendizaje.</p>
           </div>
         </div>
 
-        <div className="footerText">
-          © 2026 V.I.T.A. Academy. Precision Engineering for Mastery.
-        </div>
-      </div>
+        {formStatus.type === 'error' && (
+          <div className="form-error" role="alert">{formStatus.message}</div>
+        )}
+        {formStatus.type === 'success' && (
+          <div className="form-success" role="status">{formStatus.message}</div>
+        )}
 
-      {/* Columna Derecha - Formulario */}
-      <div className="rightPanel">
-        <div className="formCard">
-          <h2 className="cardTitle">Join the Academy</h2>
-          <p className="cardSub">Start your journey towards precision engineering and mastery.</p>
-
-          {errorMessage && (
-            <div className="errorBanner">
-              {errorMessage}
-            </div>
-          )}
-
-          {/* Google Button */}
-          <button className="googleButton" type="button">
+        <button type="button" className="social-button">
+          <span className="social-icon" aria-hidden="true">
             <svg width="20" height="20" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
             </svg>
-            <span>Registrarse con Google</span>
+          </span>
+          Registrarse con Google
+        </button>
+
+        <div className="login-divider">
+          <span>O CONTINÚA CON EMAIL</span>
+        </div>
+
+        <form onSubmit={handleSubmit} className="login-form-fields">
+          <div className="two-col-row">
+            <div className="field-group">
+              <div className="field-header">
+                <label className="field-label">Nombre *</label>
+              </div>
+              <div className={`field-input-group ${errors.name ? 'error' : ''}`}>
+                <span className="field-icon"><UserIcon /></span>
+                <input
+                  type="text"
+                  placeholder="Ingresa tu nombre"
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (touched.name) setErrors((prev) => ({ ...prev, name: validate().name }));
+                  }}
+                  onBlur={() => handleBlur('name')}
+                  aria-invalid={!!errors.name}
+                  aria-describedby={errors.name ? 'name-error' : undefined}
+                  className="field-input"
+                />
+              </div>
+              {errors.name && <p className="field-error" id="name-error">{errors.name}</p>}
+            </div>
+
+            <div className="field-group">
+              <div className="field-header">
+                <label className="field-label">Apellido *</label>
+              </div>
+              <div className={`field-input-group ${errors.lastName ? 'error' : ''}`}>
+                <span className="field-icon"><UserIcon /></span>
+                <input
+                  type="text"
+                  placeholder="Ingresa tu apellido"
+                  value={lastName}
+                  onChange={(e) => {
+                    setLastName(e.target.value);
+                    if (touched.lastName) setErrors((prev) => ({ ...prev, lastName: validate().lastName }));
+                  }}
+                  onBlur={() => handleBlur('lastName')}
+                  aria-invalid={!!errors.lastName}
+                  aria-describedby={errors.lastName ? 'lastName-error' : undefined}
+                  className="field-input"
+                />
+              </div>
+              {errors.lastName && <p className="field-error" id="lastName-error">{errors.lastName}</p>}
+            </div>
+          </div>
+
+          <div className="field-group">
+            <div className="field-header">
+              <label className="field-label">Email *</label>
+            </div>
+            <div className={`field-input-group ${errors.email ? 'error' : ''}`}>
+              <span className="field-icon"><MailIcon /></span>
+              <input
+                type="email"
+                placeholder="ejemplo@correo.com"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (touched.email) setErrors((prev) => ({ ...prev, email: validate().email }));
+                }}
+                onBlur={() => handleBlur('email')}
+                aria-invalid={!!errors.email}
+                aria-describedby={errors.email ? 'email-error' : undefined}
+                className="field-input"
+              />
+            </div>
+            {errors.email && <p className="field-error" id="email-error">{errors.email}</p>}
+          </div>
+
+          <div className="field-group">
+            <div className="field-header">
+              <label className="field-label">Contraseña *</label>
+            </div>
+            <div className={`field-input-group ${errors.password ? 'error' : ''}`}>
+              <span className="field-icon"><LockIcon /></span>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Crea una contraseña segura"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (touched.password) setErrors((prev) => ({ ...prev, password: validate().password }));
+                }}
+                onBlur={() => handleBlur('password')}
+                aria-invalid={!!errors.password}
+                aria-describedby={errors.password ? 'password-error' : undefined}
+                className="field-input"
+              />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="field-eye" aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
+                {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+              </button>
+            </div>
+            {errors.password && <p className="field-error" id="password-error">{errors.password}</p>}
+          </div>
+
+          <div className="field-group">
+            <div className="field-header">
+              <label className="field-label">Confirmar contraseña *</label>
+            </div>
+            <div className={`field-input-group ${errors.confirmPassword ? 'error' : ''}`}>
+              <span className="field-icon"><LockIcon /></span>
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                placeholder="Confirma tu contraseña"
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  if (touched.confirmPassword) setErrors((prev) => ({ ...prev, confirmPassword: validate().confirmPassword }));
+                }}
+                onBlur={() => handleBlur('confirmPassword')}
+                aria-invalid={!!errors.confirmPassword}
+                aria-describedby={errors.confirmPassword ? 'confirmPassword-error' : undefined}
+                className="field-input"
+              />
+              <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="field-eye" aria-label={showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
+                {showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
+              </button>
+            </div>
+            {errors.confirmPassword && <p className="field-error" id="confirmPassword-error">{errors.confirmPassword}</p>}
+          </div>
+
+          {formStatus.type === 'error' && <div className="form-error" role="alert">{formStatus.message}</div>}
+          {formStatus.type === 'success' && <div className="form-success" role="status">{formStatus.message}</div>}
+
+          <button type="submit" className="submit-button" disabled={loading}>
+            {loading ? 'Creando cuenta...' : 'Registrarse'}
           </button>
 
-          {/* Divider */}
-          <div className="divider">
-            <span className="dividerText">OR</span>
-          </div>
-
-          <form onSubmit={handleSubmit} className="registerForm">
-            {/* Name field */}
-            <div className="inputGroup">
-              <label className="label">NAME</label>
-              <div className="inputWrapper">
-                <span className="icon">
-                  <UserIcon />
-                </span>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  placeholder="Enter your name"
-                  className="input"
-                />
-              </div>
-            </div>
-
-            {/* Last Name field */}
-            <div className="inputGroup">
-              <label className="label">LAST NAME</label>
-              <div className="inputWrapper">
-                <span className="icon">
-                  <UserIcon />
-                </span>
-                <input
-                  type="text"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  required
-                  placeholder="Enter your last name"
-                  className="input"
-                />
-              </div>
-            </div>
-
-            {/* Email Address field */}
-            <div className="inputGroup">
-              <label className="label">EMAIL ADDRESS</label>
-              <div className="inputWrapper">
-                <span className="icon">
-                  <MailIcon />
-                </span>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="name@example.com"
-                  className="input"
-                />
-              </div>
-            </div>
-
-            {/* Password field */}
-            <div className="inputGroup">
-              <label className="label">PASSWORD</label>
-              <div className="inputWrapper">
-                <span className="icon">
-                  <LockIcon />
-                </span>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  placeholder="Create a strong password"
-                  className="input"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="eyeToggle"
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeOffIcon /> : <EyeIcon />}
-                </button>
-              </div>
-            </div>
-
-            {/* Confirm Password field */}
-            <div className="inputGroup">
-              <label className="label">CONFIRM PASSWORD</label>
-              <div className="inputWrapper">
-                <span className="icon">
-                  <LockIcon />
-                </span>
-                <input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  placeholder="Confirm your password"
-                  className="input"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="eyeToggle"
-                  tabIndex={-1}
-                >
-                  {showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
-                </button>
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <button type="submit" disabled={loading} className="button">
-              {loading ? (
-                <>
-                  <span className="spinner"></span>
-                  <span className="buttonText">Creating Account...</span>
-                </>
-              ) : (
-                'Create Account →'
-              )}
-            </button>
-          </form>
-
-          <p className="footerText">
-            Already have an account?{' '}
-            <Link to="/login" className="signInLink">
-              Sign in
-            </Link>
-          </p>
-        </div>
+          <p className="register-caption">¿Ya tienes una cuenta? <Link to="/login" className="register-link">Inicia Sesión</Link></p>
+        </form>
       </div>
-    </div>
+    </AuthLayout>
   );
 };

@@ -1,18 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
+  --background: #0B1120;
+  --panel-left: #08101D;
+  --panel-right: #111E33;
+  --border-cyan: #22D3EE;
+  --green: #4ADE80;
+  --green-dark: #04210E;
+  --text-light: #E2E8F0;
+  --text-muted: #94A3B8;
+  --input-bg: #080F1D;
+  --input-border: #243450;
   --primary: #10B981;
   --secondary: #00E676;
-  --tertiary: #0F172A;
-  --background: #F8FAFC;
-  --surface: #FFFFFF;
-  --border: #CBD5E1;
-  --border-dark: #E2E8F0;
-  --text-muted: #94A3B8;
-  --text-secondary: #64748B;
-  --text-dark: #0F172A;
-  --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-  --shadow-hover: 0 20px 40px -10px rgba(16, 185, 129, 0.15);
 }
 
 * {
@@ -329,7 +329,7 @@
   font-size: 1rem;
   font-family: 'Plus Jakarta Sans', sans-serif;
   color: var(--text-dark);
-  background: var(--background-cards);
+  background: var(--input-bg-dark);
   transition: all 0.3s ease;
 }
 
@@ -364,6 +364,43 @@
 
 .eyeToggle:hover {
   color: var(--primary);
+}
+
+/* Autofill fixes to keep inputs dark */
+.input:-webkit-autofill,
+.input:-webkit-autofill:hover,
+.input:-webkit-autofill:focus,
+.input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--input-text-light) !important;
+  -webkit-box-shadow: 0 0 0px 1000px var(--input-bg-dark) inset !important;
+  box-shadow: 0 0 0px 1000px var(--input-bg-dark) inset !important;
+  transition: background-color 9999s ease-in-out 0s !important;
+}
+
+.input:-internal-autofill-selected {
+  background-color: var(--input-bg-dark) !important;
+  color: var(--input-text-light) !important;
+}
+
+.input:-moz-autofill,
+.input:-moz-autofill:hover,
+.input:-moz-autofill:focus,
+.input:-moz-autofill:active {
+  box-shadow: 0 0 0px 1000px var(--input-bg-dark) inset !important;
+  -moz-text-fill-color: var(--input-text-light) !important;
+}
+
+/* Two column layout for name fields */
+.twoColumns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .twoColumns {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* CTA Button */
