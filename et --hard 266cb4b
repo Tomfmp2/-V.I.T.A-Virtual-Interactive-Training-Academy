@@ -1,0 +1,31 @@
+[33m266cb4b[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeacture/refacture-styless[m[33m)[m HEAD@{0}: reset: moving to HEAD~1
+[33md96f2a9[m[33m ([m[1;31morigin/feature/auth-login-integration[m[33m, [m[1;32mfeature/auth-login-integration[m[33m)[m HEAD@{1}: reset: moving to HEAD
+[33md96f2a9[m[33m ([m[1;31morigin/feature/auth-login-integration[m[33m, [m[1;32mfeature/auth-login-integration[m[33m)[m HEAD@{2}: checkout: moving from develop to feacture/refacture-styless
+[33m660a3db[m[33m ([m[1;31morigin/Develop[m[33m, [m[1;32mdevelop[m[33m)[m HEAD@{3}: checkout: moving from feacture/refacture-styless to develop
+[33md96f2a9[m[33m ([m[1;31morigin/feature/auth-login-integration[m[33m, [m[1;32mfeature/auth-login-integration[m[33m)[m HEAD@{4}: checkout: moving from feature/auth-login-integration to feacture/refacture-styless
+[33md96f2a9[m[33m ([m[1;31morigin/feature/auth-login-integration[m[33m, [m[1;32mfeature/auth-login-integration[m[33m)[m HEAD@{5}: commit: feat: add validation for registration fields and improve error messages
+[33m266cb4b[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeacture/refacture-styless[m[33m)[m HEAD@{6}: commit: style: :art: implement HomePage and LandingPage components with authentication checks; add styles for improved UI; fix routing in AppRouter
+[33m9f897fa[m HEAD@{7}: commit: fix: :bug: enhance authentication API with user info retrieval and logout functionality; add Navbar and HomePage components; update RegisterPage for last name input
+[33m4fe2b86[m HEAD@{8}: checkout: moving from feature/auth-screens to feature/auth-login-integration
+[33mc9e1a2c[m[33m ([m[1;31morigin/feature/auth-screens[m[33m, [m[1;32mfeature/auth-screens[m[33m)[m HEAD@{9}: checkout: moving from feature/auth-login-integration to feature/auth-screens
+[33m4fe2b86[m HEAD@{10}: commit: fix: :bug: update import statement for type definitions in authApi
+[33m935993f[m HEAD@{11}: reset: moving to HEAD
+[33m935993f[m HEAD@{12}: commit: feat(auth): implement login and registration API integration with error handling
+[33mc9e1a2c[m[33m ([m[1;31morigin/feature/auth-screens[m[33m, [m[1;32mfeature/auth-screens[m[33m)[m HEAD@{13}: checkout: moving from feature/auth-screens to feature/auth-login-integration
+[33mc9e1a2c[m[33m ([m[1;31morigin/feature/auth-screens[m[33m, [m[1;32mfeature/auth-screens[m[33m)[m HEAD@{14}: commit: Refactor Login and Register Pages: Update UI components, enhance accessibility, and improve error handling. Replace Google login implementation with static UI buttons. Add new icons and metrics display for a better user experience.
+[33m739b91a[m HEAD@{15}: commit: feat: add LandingPage component with styles and routing
+[33m9a6abe4[m HEAD@{16}: commit: feat: add RegisterPage component and integrate with AppRouter
+[33m8343e42[m HEAD@{17}: reset: moving to HEAD
+[33m8343e42[m HEAD@{18}: commit: feat: implement login page with Google OAuth and email/password authentication
+[33m66342c2[m HEAD@{19}: commit: feat(auth): implement AuthContext for user authentication and session management
+[33m2e7a10f[m HEAD@{20}: checkout: moving from feature/setup-app-router-auth to feature/auth-screens
+[33mac0ed71[m[33m ([m[1;31morigin/feature/setup-app-router-auth[m[33m, [m[1;32mfeature/setup-app-router-auth[m[33m)[m HEAD@{21}: commit: feat(auth): refactor authentication context and integrate with main app
+[33ma58d091[m HEAD@{22}: commit: fix: Necessary modifications have been uploaded.
+[33m2e7a10f[m HEAD@{23}: checkout: moving from feature/auth-screens to feature/setup-app-router-auth
+[33m2e7a10f[m HEAD@{24}: checkout: moving from feature/setup-app-router-auth to feature/auth-screens
+[33m2e7a10f[m HEAD@{25}: commit: feat(router): connect AppRouter component to root App
+[33m42c1366[m HEAD@{26}: commit: feat(auth): implement auth store for token and session management
+[33m2bdbf53[m HEAD@{27}: commit (amend): feat(config): configure base axios instance with jwt interceptor
+[33mfdd10eb[m HEAD@{28}: commit: feat(config): configure base axios instance with jwt interceptor
+[33mde58593[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{29}: checkout: moving from main to feature/setup-app-router-auth
+[33mde58593[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{30}: clone: from https://github.com/Tomfmp2/-V.I.T.A-Virtual-Interactive-Training-Academy.git

@@ -329,7 +329,7 @@
   font-size: 1rem;
   font-family: 'Plus Jakarta Sans', sans-serif;
   color: var(--text-dark);
-  background: var(--surface);
+  background: var(--background-cards);
   transition: all 0.3s ease;
 }
 

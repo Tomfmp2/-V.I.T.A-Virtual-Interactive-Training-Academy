@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { LoginPage } from '../pages/loginPage';
-import { RegisterPage } from '../pages/registerPage';
+import { LoginPage } from '../pages/LoginPage';
+import { RegisterPage } from '../pages/RegisterPage';
 import { LandingPage } from '../pages/LandingPage';
-import { HomePage } from '../pages/HomePage'; // <-- ¡Faltaba esta importación!
+import { HomePage } from '../pages/HomePage';
 
 export const AppRouter = () => {
     return (
