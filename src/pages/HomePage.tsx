@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import BrandLogo from '../components/BrandLogo';
+import { PerfilPage } from './PerfilPage';
 import './HomePage.css';
 
 type IconName =
@@ -188,7 +189,10 @@ export const HomePage = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  const displayName = user?.nombre?.trim() || 'Usuario';
+  const userWithLastName = user as (typeof user & { apellido?: string }) | null;
+  const displayName = [user?.nombre?.trim(), userWithLastName?.apellido?.trim()]
+    .filter(Boolean)
+    .join(' ') || 'Usuario';
   const displayEmail = user?.email?.trim() || 'Correo no disponible';
   const displayRole = user?.rol?.trim() || 'No especificado';
 
@@ -504,6 +508,11 @@ export const HomePage = () => {
         ========================================== */}
         <main className="content">
 
+          {active === 'settings' ? (
+            <PerfilPage />
+          ) : (
+            <>
+
           {/* GREETING */}
           <section className="greeting">
 
@@ -709,6 +718,9 @@ export const HomePage = () => {
             </div>
 
           </section>
+
+            </>
+          )}
 
         </main>
 
