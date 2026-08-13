@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import BrandLogo from '../components/BrandLogo';
 import { PerfilPage } from './PerfilPage';
+import { getCoursePermissions, normalizePlatformRole } from '../utils/coursePermissions';
 import './HomePage.css';
 
 type IconName =
@@ -187,6 +188,7 @@ export const HomePage = () => {
   const [active, setActive] = useState('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [courseAccessMessage, setCourseAccessMessage] = useState('');
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const userWithLastName = user as (typeof user & { apellido?: string }) | null;
@@ -195,6 +197,9 @@ export const HomePage = () => {
     .join(' ') || 'Usuario';
   const displayEmail = user?.email?.trim() || 'Correo no disponible';
   const displayRole = user?.rol?.trim() || 'No especificado';
+  const coursePermissions = getCoursePermissions(user?.rol);
+  const userRole = normalizePlatformRole(user?.rol);
+  const isStaff = userRole === 'admin' || userRole === 'instructor';
 
   // Protege el Dashboard.
   // Si no existe una sesión activa, vuelve a Login.
@@ -277,6 +282,12 @@ export const HomePage = () => {
   });
 
   const handleContinue = (courseId: string) => {
+    if (!coursePermissions.enterCourse) {
+      setCourseAccessMessage('No tienes permisos para realizar esta acción.');
+      return;
+    }
+
+    setCourseAccessMessage('');
     console.log('Continuar curso:', courseId);
 
     // Mantiene la ruta actual existente.
@@ -351,7 +362,7 @@ export const HomePage = () => {
             </span>
           </button>
 
-          <button
+          {isStaff && <button
             type="button"
             className={`nav-item ${
               active === 'explore' ? 'active' : ''
@@ -365,9 +376,9 @@ export const HomePage = () => {
             <span className="nav-label">
               Explorar
             </span>
-          </button>
+          </button>}
 
-          <button
+          {isStaff && <button
             type="button"
             className={`nav-item ${
               active === 'certs' ? 'active' : ''
@@ -381,7 +392,7 @@ export const HomePage = () => {
             <span className="nav-label">
               Certificados
             </span>
-          </button>
+          </button>}
 
           <button
             type="button"
@@ -617,7 +628,7 @@ export const HomePage = () => {
 
             <div className="courses-grid">
 
-              {filteredCourses.length > 0 ? (
+              {coursePermissions.viewCourse && filteredCourses.length > 0 ? (
 
                 filteredCourses.map((course) => (
 
@@ -707,12 +718,23 @@ export const HomePage = () => {
 
                 ))
 
-              ) : (
+              ) : coursePermissions.viewCourse ? (
 
                 <div className="no-courses">
                   No se encontraron cursos.
                 </div>
 
+              ) : (
+
+                <div className="no-courses" role="alert">
+                  <strong>Acceso no permitido</strong>
+                  <span>No tienes permisos para realizar esta acción.</span>
+                </div>
+
+              )}
+
+              {courseAccessMessage && (
+                <p className="course-access-message" role="alert">{courseAccessMessage}</p>
               )}
 
             </div>

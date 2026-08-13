@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AxiosError } from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { loginApi } from '../api/authApi';
+import { getRoleHomePath } from '../utils/coursePermissions';
 
 const MailIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -84,7 +85,7 @@ export const LoginForm = () => {
       const { token, usuario } = loginResponse;
       login(token, usuario);
       setFormStatus({ type: 'success', message: 'Inicio de sesión exitoso.' });
-      navigate('/home');
+      navigate(getRoleHomePath(usuario.rol) ?? '/403');
     } catch (error: unknown) {
       const nextFormErrors: typeof errors = {};
 
