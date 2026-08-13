@@ -10,7 +10,7 @@ export const BrandLogo = () => (
         </linearGradient>
       </defs>
       <g>
-        <path d="M12 14L28 48L44 14H34L28 28L22 14H12Z" fill="#0F172A" />
+        <path d="M12 14L28 48L44 14H34L28 28L22 14H12Z" fill="#FFFFFF" />
         <path d="M28 26L38 14H28L22 26L28 38L34 26H28Z" fill="url(#vita-v2-gradient)" />
         <polygon points="25,21 33,26 25,31" fill="#FFFFFF" />
       </g>
