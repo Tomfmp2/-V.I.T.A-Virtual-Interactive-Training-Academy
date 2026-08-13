@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import BrandLogo from '../components/BrandLogo';
@@ -185,6 +185,12 @@ export const HomePage = () => {
 
   const [active, setActive] = useState('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  const displayName = user?.nombre?.trim() || 'Usuario';
+  const displayEmail = user?.email?.trim() || 'Correo no disponible';
+  const displayRole = user?.rol?.trim() || 'No especificado';
 
   // Protege el Dashboard.
   // Si no existe una sesión activa, vuelve a Login.
@@ -193,6 +199,28 @@ export const HomePage = () => {
       navigate('/login');
     }
   }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    const closeUserMenu = (event: MouseEvent) => {
+      if (!userMenuRef.current?.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', closeUserMenu);
+    document.addEventListener('keydown', closeOnEscape);
+
+    return () => {
+      document.removeEventListener('mousedown', closeUserMenu);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -398,7 +426,7 @@ export const HomePage = () => {
         {/* =========================================
             TOP HEADER
         ========================================== */}
-<header className="relative flex h-17.5 items-center justify-between px-8">
+<header className="dashboard-header relative flex h-17.5 items-center justify-between px-8">
   
   {/* 1. BUSCADOR CENTRADO (Hijo directo del header con absolute) */}
   <div className="absolute left-1/2 w-300.5 -translate-x-1/2">
@@ -434,15 +462,34 @@ export const HomePage = () => {
     </button>
 
     {/* PROFILE */}
-    <div className="flex cursor-pointer items-center gap-2">
+    <div ref={userMenuRef} className="user-menu">
+      <button
+        type="button"
+        className="user-menu-trigger"
+        onClick={() => setIsUserMenuOpen((isOpen) => !isOpen)}
+        aria-expanded={isUserMenuOpen}
+        aria-haspopup="true"
+        aria-controls="user-menu-dropdown"
+      >
       <div className="text-sm font-medium text-slate-200">
-        {user?.nombre || user?.email || 'Usuario'}
+        {displayName}
       </div>
 
       <div className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-500/20 font-semibold text-cyan-400">
-        {user?.nombre ? user.nombre.charAt(0).toUpperCase() : 'U'}
+        {displayName.charAt(0).toUpperCase()}
       </div>
-    </div> 
+      </button>
+
+      {isUserMenuOpen && (
+        <div id="user-menu-dropdown" className="user-menu-dropdown" role="region" aria-label="Información del usuario">
+          <p className="user-menu-name">{displayName}</p>
+          <p className="user-menu-email">{displayEmail}</p>
+          <div className="user-menu-divider" />
+          <p className="user-menu-role-label">Rol</p>
+          <span className="user-menu-role">{displayRole}</span>
+        </div>
+      )}
+    </div>
 
     <div>
     </div>

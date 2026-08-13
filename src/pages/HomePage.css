@@ -65,6 +65,81 @@
   min-height: 100vh;
 }
 
+.dashboard-header {
+  margin-inline: 8px;
+}
+
+.user-menu {
+  position: relative;
+}
+
+.user-menu-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.user-menu-trigger:focus-visible {
+  outline: 2px solid #22d3ee;
+  outline-offset: 4px;
+  border-radius: 999px;
+}
+
+.user-menu-dropdown {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 10px);
+  right: 0;
+  width: min(280px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 16px;
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  border-radius: 12px;
+  background: #111e33;
+  box-shadow: 0 14px 30px rgba(2, 6, 23, 0.42);
+}
+
+.user-menu-name {
+  margin: 0;
+  color: #e2e8f0;
+  font-size: 14px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.user-menu-email {
+  margin: 4px 0 0;
+  color: #94a3b8;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.user-menu-divider {
+  height: 1px;
+  margin: 14px 0 12px;
+  background: rgba(34, 211, 238, 0.12);
+}
+
+.user-menu-role-label {
+  margin: 0 0 6px;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.user-menu-role {
+  display: inline-flex;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(74, 222, 128, 0.12);
+  color: #4ade80;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .top-header {
   height: 72px;
   display: flex;
