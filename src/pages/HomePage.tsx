@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import BrandLogo from '../components/BrandLogo';
 import { PerfilPage } from './PerfilPage';
+import { CategoriesPage } from './admin/CategoriesPage';
 import { getCoursePermissions } from '../utils/coursePermissions';
 import { getRoleAreaLabel, getRoleNavItems } from '../utils/roleNavigation';
 import './HomePage.css';
@@ -13,6 +14,7 @@ type IconName =
   | 'explore'
   | 'certificate'
   | 'users'
+  | 'categories'
   | 'settings'
   | 'logout'
   | 'search'
@@ -98,6 +100,19 @@ const Icon = ({ name, size = 18 }: IconProps) => {
           <path d="M3.5 20C3.5 16.9 6 14.5 9 14.5C12 14.5 14.5 16.9 14.5 20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
           <path d="M16 5.5C17.7 5.5 19 6.8 19 8.5C19 10.2 17.7 11.5 16 11.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
           <path d="M17.5 14.8C19.6 15.5 21 17.5 21 20" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+        </svg>
+      );
+
+    case 'categories':
+      return (
+        <svg {...commonProps}>
+          <path
+            d="M4 6.5C4 5.67 4.67 5 5.5 5H10L12 7.5H18.5C19.33 7.5 20 8.17 20 9V17.5C20 18.33 19.33 19 18.5 19H5.5C4.67 19 4 18.33 4 17.5V6.5Z"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinejoin="round"
+          />
+          <path d="M8 12.5H16" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
         </svg>
       );
 
@@ -508,7 +523,9 @@ export const HomePage = () => {
         ========================================== */}
         <main className="content">
 
-          {active === 'settings' ? (
+          {active === 'categories' ? (
+            <CategoriesPage />
+          ) : active === 'settings' ? (
             <PerfilPage />
           ) : areaPlaceholder ? (
             <section className="area-placeholder">

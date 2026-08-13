@@ -6,6 +6,7 @@ export type RoleNavIcon =
   | 'explore'
   | 'certificate'
   | 'users'
+  | 'categories'
   | 'settings';
 
 export interface RoleNavItem {
@@ -21,6 +22,7 @@ const navItemsByRole: Record<PlatformRole, RoleNavItem[]> = {
     { id: 'explore', label: 'Explorar', icon: 'explore' },
     { id: 'certs', label: 'Certificados', icon: 'certificate' },
     { id: 'users', label: 'Usuarios', icon: 'users' },
+    { id: 'categories', label: 'Categorías', icon: 'categories' },
     { id: 'settings', label: 'Configuración', icon: 'settings' },
   ],
   instructor: [
