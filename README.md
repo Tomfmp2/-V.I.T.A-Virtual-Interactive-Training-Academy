@@ -95,6 +95,30 @@ App en:
 http://localhost:5173
 ```
 
+## Pruebas
+
+```bash
+npm test          # suite completa (vitest)
+npm run test:watch
+```
+
+Las pruebas de componente corren en `jsdom` y no necesitan backend.
+
+Las pruebas de integración de `src/api` se ejecutan contra un mock que replica el
+contrato de `CategoriesController.cs` sin tocar la base de datos de desarrollo:
+
+```bash
+npm run mock:api   # levanta el mock en http://localhost:5045
+```
+
+Apunta el frontend al mock con un `.env.local`:
+
+```
+VITE_API_URL=http://localhost:5045/api
+```
+
+Si el mock no está corriendo, esas pruebas se saltan en vez de fallar.
+
 ## Reglas de UI
 
 - Guards de ruta por rol: sin token → login; rol incorrecto → sin acceso
