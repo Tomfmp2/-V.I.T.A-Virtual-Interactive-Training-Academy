@@ -6,6 +6,7 @@ import { HomePage } from '../pages/HomePage';
 import { ForbiddenPage } from '../pages/ForbiddenPage';
 import { RoleGuard } from '../components/auth/RoleGuard';
 import { RoleHomeRedirect } from '../components/auth/RoleHomeRedirect';
+import { roleRouteAccess } from '../utils/roleNavigation';
 
 export const AppRouter = () => {
     return (
@@ -13,9 +14,19 @@ export const AppRouter = () => {
             <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/home" element={<RoleHomeRedirect />} />
-                <Route path="/admin/*" element={<RoleGuard allowedRoles={['admin']}><HomePage /></RoleGuard>} />
-                <Route path="/instructor/*" element={<RoleGuard allowedRoles={['admin', 'instructor']}><HomePage /></RoleGuard>} />
-                <Route path="/estudiante/*" element={<RoleGuard allowedRoles={['estudiante']}><HomePage /></RoleGuard>} />
+
+                {Object.entries(roleRouteAccess).map(([routeBase, allowedRoles]) => (
+                    <Route
+                        key={routeBase}
+                        path={`${routeBase}/*`}
+                        element={
+                            <RoleGuard allowedRoles={allowedRoles}>
+                                <HomePage />
+                            </RoleGuard>
+                        }
+                    />
+                ))}
+
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/403" element={<ForbiddenPage />} />

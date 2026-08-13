@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import BrandLogo from '../components/BrandLogo';
 import { PerfilPage } from './PerfilPage';
-import { getCoursePermissions, normalizePlatformRole } from '../utils/coursePermissions';
+import { getCoursePermissions } from '../utils/coursePermissions';
+import { getRoleAreaLabel, getRoleNavItems } from '../utils/roleNavigation';
 import './HomePage.css';
 
 type IconName =
@@ -11,6 +12,7 @@ type IconName =
   | 'courses'
   | 'explore'
   | 'certificate'
+  | 'users'
   | 'settings'
   | 'logout'
   | 'search'
@@ -86,6 +88,16 @@ const Icon = ({ name, size = 18 }: IconProps) => {
             strokeLinejoin="round"
           />
           <path d="M9.5 9L11 10.5L14.5 7.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+
+    case 'users':
+      return (
+        <svg {...commonProps}>
+          <circle cx="9" cy="8.5" r="3.5" stroke="currentColor" strokeWidth="1.8" />
+          <path d="M3.5 20C3.5 16.9 6 14.5 9 14.5C12 14.5 14.5 16.9 14.5 20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M16 5.5C17.7 5.5 19 6.8 19 8.5C19 10.2 17.7 11.5 16 11.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+          <path d="M17.5 14.8C19.6 15.5 21 17.5 21 20" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
         </svg>
       );
 
@@ -198,8 +210,8 @@ export const HomePage = () => {
   const displayEmail = user?.email?.trim() || 'Correo no disponible';
   const displayRole = user?.rol?.trim() || 'No especificado';
   const coursePermissions = getCoursePermissions(user?.rol);
-  const userRole = normalizePlatformRole(user?.rol);
-  const isStaff = userRole === 'admin' || userRole === 'instructor';
+  const navItems = getRoleNavItems(user?.rol);
+  const areaLabel = getRoleAreaLabel(user?.rol);
 
   // Protege el Dashboard.
   // Si no existe una sesión activa, vuelve a Login.
@@ -308,12 +320,47 @@ export const HomePage = () => {
   const scrollToCourses = () => {
     setActive('my-courses');
 
-    document
-      .getElementById('continuar-aprendiendo')
-      ?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      });
+    // El contenido del dashboard puede no estar montado si venimos de otra área.
+    requestAnimationFrame(() => {
+      document
+        .getElementById('continuar-aprendiendo')
+        ?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+    });
+  };
+
+  // Áreas declaradas en el menú que todavía no tienen pantalla de negocio (M10+).
+  const areaPlaceholders: Record<string, { title: string; description: string }> = {
+    explore: {
+      title: 'Explorar catálogo',
+      description: 'Área disponible para tu rol. El catálogo completo llega en el siguiente módulo.',
+    },
+    certs: {
+      title: 'Certificados',
+      description: 'Área disponible para tu rol. La emisión de certificados llega en el siguiente módulo.',
+    },
+    users: {
+      title: 'Gestión de usuarios',
+      description: 'Área exclusiva de administración. La gestión completa llega en el siguiente módulo.',
+    },
+  };
+
+  const areaPlaceholder = areaPlaceholders[active];
+
+  const handleNavClick = (itemId: string) => {
+    if (itemId === 'dashboard') {
+      scrollToTop();
+      return;
+    }
+
+    if (itemId === 'my-courses') {
+      scrollToCourses();
+      return;
+    }
+
+    setActive(itemId);
   };
 
   return (
@@ -328,87 +375,29 @@ export const HomePage = () => {
           <BrandLogo />
         
 
-        <nav className="sidebar-nav">
+        <p className="sidebar-area" aria-label="Área asignada">
+          {areaLabel}
+        </p>
 
-          <button
-            type="button"
-            className={`nav-item ${
-              active === 'dashboard' ? 'active' : ''
-            }`}
-            onClick={scrollToTop}
-          >
-            <span className="nav-icon">
-              <Icon name="dashboard" size={17} />
-            </span>
+        <nav className="sidebar-nav" aria-label="Menú por rol">
 
-            <span className="nav-label">
-              Dashboard
-            </span>
-          </button>
+          {navItems.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={`nav-item ${active === item.id ? 'active' : ''}`}
+              aria-current={active === item.id ? 'page' : undefined}
+              onClick={() => handleNavClick(item.id)}
+            >
+              <span className="nav-icon">
+                <Icon name={item.icon} size={17} />
+              </span>
 
-          <button
-            type="button"
-            className={`nav-item ${
-              active === 'my-courses' ? 'active' : ''
-            }`}
-            onClick={scrollToCourses}
-          >
-            <span className="nav-icon">
-              <Icon name="courses" size={17} />
-            </span>
-
-            <span className="nav-label">
-              Mis Cursos
-            </span>
-          </button>
-
-          {isStaff && <button
-            type="button"
-            className={`nav-item ${
-              active === 'explore' ? 'active' : ''
-            }`}
-            onClick={() => setActive('explore')}
-          >
-            <span className="nav-icon">
-              <Icon name="explore" size={17} />
-            </span>
-
-            <span className="nav-label">
-              Explorar
-            </span>
-          </button>}
-
-          {isStaff && <button
-            type="button"
-            className={`nav-item ${
-              active === 'certs' ? 'active' : ''
-            }`}
-            onClick={() => setActive('certs')}
-          >
-            <span className="nav-icon">
-              <Icon name="certificate" size={17} />
-            </span>
-
-            <span className="nav-label">
-              Certificados
-            </span>
-          </button>}
-
-          <button
-            type="button"
-            className={`nav-item ${
-              active === 'settings' ? 'active' : ''
-            }`}
-            onClick={() => setActive('settings')}
-          >
-            <span className="nav-icon">
-              <Icon name="settings" size={17} />
-            </span>
-
-            <span className="nav-label">
-              Configuración
-            </span>
-          </button>
+              <span className="nav-label">
+                {item.label}
+              </span>
+            </button>
+          ))}
 
         </nav>
         </div>
@@ -521,6 +510,11 @@ export const HomePage = () => {
 
           {active === 'settings' ? (
             <PerfilPage />
+          ) : areaPlaceholder ? (
+            <section className="area-placeholder">
+              <h1>{areaPlaceholder.title}</h1>
+              <p className="greeting-sub">{areaPlaceholder.description}</p>
+            </section>
           ) : (
             <>
 
@@ -532,7 +526,7 @@ export const HomePage = () => {
             </h1>
 
             <p className="greeting-sub">
-              Tienes un excelente avance esta semana.
+              {areaLabel} · Tienes un excelente avance esta semana.
               Sigue así y completa tus metas.
             </p>
 

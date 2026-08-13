@@ -1,5 +1,3 @@
-import React from 'react';
-
 export const BrandLogo = () => (
   <div className="brand-logo-svg">
     <svg width="300" height="80" viewBox="0 0 260 64" fill="none" xmlns="http://www.w3.org/2000/svg">
