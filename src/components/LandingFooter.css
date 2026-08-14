@@ -1,112 +1,65 @@
 .vita-footer {
-  position: relative;
-  margin-top: 4rem;
-  overflow: hidden;
-  border-top: 1px solid rgba(0, 230, 118, 0.18);
-  background:
-    linear-gradient(180deg, rgba(0, 230, 118, 0.05), transparent 28%),
-    #070f1c;
+  margin-top: 5rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.14);
+  background: #0a1220;
   color: #e2e8f0;
 }
 
-.vita-footer-glow {
-  position: absolute;
-  inset: auto auto -40% 20%;
-  width: 55%;
-  height: 70%;
-  pointer-events: none;
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.12), transparent 65%);
-}
-
-.vita-footer-sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
 .vita-footer-inner {
-  position: relative;
-  z-index: 1;
   max-width: 1120px;
   margin: 0 auto;
-  padding: 3.25rem 1.5rem 2.25rem;
+  padding: 4rem 1.75rem 3rem;
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 0.85fr));
-  gap: 2rem 1.75rem;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.7fr) minmax(0, 0.7fr);
+  gap: 3rem 4rem;
   align-items: start;
 }
 
 .vita-footer-brand {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
   gap: 1rem;
-  max-width: 28rem;
+  max-width: 22rem;
 }
 
-.vita-footer-logo {
+.vita-footer-mark {
   display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
   text-decoration: none;
   color: inherit;
-  transition: transform 0.2s ease;
 }
 
-.vita-footer-logo:hover {
-  transform: translateY(-1px);
+.vita-footer-mark-name {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: #f8fafc;
 }
 
-.vita-footer-logo .brand-logo-svg {
-  background: rgba(248, 250, 252, 0.96);
-  padding: 6px 10px;
-  border-radius: 10px;
-}
-
-.vita-footer-logo .brand-logo-svg svg {
-  height: 44px;
-  width: auto;
-  display: block;
+.vita-footer-mark-sub {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #64748b;
 }
 
 .vita-footer-tagline {
   margin: 0;
   color: #94a3b8;
-  font-size: 0.95rem;
-  line-height: 1.65;
-}
-
-.vita-footer-cta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 0.25rem;
-  padding: 0.65rem 1.15rem;
-  border-radius: 999px;
-  background: #00e676;
-  color: #0f172a;
-  font-weight: 700;
-  font-size: 0.9rem;
-  text-decoration: none;
-  transition: background 0.15s ease, transform 0.15s ease;
-}
-
-.vita-footer-cta:hover {
-  background: #10b981;
-  transform: translateY(-1px);
+  font-size: 0.92rem;
+  line-height: 1.7;
 }
 
 .vita-footer-col h3 {
-  margin: 0 0 0.9rem;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  margin: 0 0 1.15rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #86efac;
+  color: #64748b;
 }
 
 .vita-footer-col ul {
@@ -115,71 +68,46 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.85rem;
 }
 
 .vita-footer-col a {
   color: #cbd5e1;
   text-decoration: none;
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   transition: color 0.15s ease;
 }
 
 .vita-footer-col a:hover {
-  color: #67e8f9;
-}
-
-.vita-footer-roles li {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.55rem;
-  color: #94a3b8;
-  font-size: 0.9rem;
-  line-height: 1.45;
-}
-
-.vita-footer-role-dot {
-  width: 0.45rem;
-  height: 0.45rem;
-  margin-top: 0.4rem;
-  flex-shrink: 0;
-  border-radius: 999px;
-  background: #00e676;
-  box-shadow: 0 0 0 3px rgba(0, 230, 118, 0.15);
+  color: #f8fafc;
 }
 
 .vita-footer-bottom {
-  position: relative;
-  z-index: 1;
-  border-top: 1px solid rgba(148, 163, 184, 0.12);
-  background: rgba(2, 6, 23, 0.45);
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
 }
 
 .vita-footer-bottom-inner {
   max-width: 1120px;
   margin: 0 auto;
-  padding: 1rem 1.5rem 1.35rem;
+  padding: 1.25rem 1.75rem 1.75rem;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem 1rem;
+  gap: 0.75rem 1.5rem;
 }
 
 .vita-footer-bottom p {
   margin: 0;
   color: #64748b;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
 }
 
-.vita-footer-bottom-note {
-  color: #475569;
-}
-
-@media (max-width: 900px) {
+@media (max-width: 800px) {
   .vita-footer-inner {
     grid-template-columns: 1fr 1fr;
-    padding-top: 2.75rem;
+    gap: 2.5rem 2rem;
+    padding: 3rem 1.25rem 2.25rem;
   }
 
   .vita-footer-brand {
@@ -188,15 +116,15 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 520px) {
   .vita-footer {
-    margin-top: 2.5rem;
+    margin-top: 3.5rem;
   }
 
   .vita-footer-inner {
     grid-template-columns: 1fr;
-    gap: 1.75rem;
-    padding: 2.25rem 1rem 1.75rem;
+    gap: 2.25rem;
+    padding: 2.75rem 1rem 2rem;
   }
 
   .vita-footer-bottom-inner {
