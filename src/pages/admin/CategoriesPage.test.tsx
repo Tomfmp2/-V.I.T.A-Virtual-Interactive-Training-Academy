@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AxiosError } from 'axios';
-import { AuthProvider } from '../../context/AuthContext';
+import { AuthProvider } from '../../context/AuthProvider';
 import { CategoriesPage } from './CategoriesPage';
 import type { Category } from '../../types/category';
 
