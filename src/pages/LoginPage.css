@@ -72,46 +72,14 @@ button {
 }
 
 .login-left-panel {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  background-image: url('../assets/imagen-fondo-1.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-color: #020B18;
-  border: none;
-  border-radius: 24px;
-  overflow: hidden;
-  min-height: 380px;
-  height: auto;
-  box-shadow: none;
+  /* Estilos canónicos en LoginBrandPanel.css */
 }
 
 @media (max-width: 1023.98px) {
-  .login-left-panel {
-    min-height: 340px;
-  }
-}
-
-@media (max-width: 1023.98px) {
-  .login-left-content {
-    padding: 32px;
-    max-width: 100%;
-  }
-
-  .brand-logo {
-    margin-bottom: 64px;
-  }
+  /* reserved — layout en LoginBrandPanel.css */
 }
 
 @media (max-width: 767.98px) {
-  .login-left-panel {
-    min-height: 320px;
-    padding-bottom: 1rem;
-  }
-
   .login-page-grid {
     grid-template-columns: 1fr;
   }
@@ -125,136 +93,18 @@ button {
   .login-page-shell {
     padding: 0.75rem;
   }
-
-  .login-left-content {
-    padding: 24px;
-    max-width: 100%;
-  }
-
-  .brand-logo {
-    margin-bottom: 40px;
-  }
-
-  .brand-heading {
-    font-size: clamp(2rem, 8vw, 2.6rem);
-  }
-
-  .brand-copy {
-    font-size: 0.92rem;
-    max-width: 100%;
-  }
 }
 
+/* Evitar reglas legacy del panel visual (grid/overlay) que saturan el login */
 .login-left-panel::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(255,255,255,0.04) 1px, transparent 1px),
-    radial-gradient(circle at 88% 16%, rgba(56, 189, 248, 0.14), transparent 8%),
-    radial-gradient(circle at 15% 12%, rgba(16, 185, 129, 0.12), transparent 6%);
-  background-size: 58px 58px, 58px 58px, 220px 220px, 160px 160px;
-  opacity: 0.7;
-  pointer-events: none;
+  content: none;
+  display: none;
 }
 
 .login-left-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(2, 11, 24, 0.64);
-  pointer-events: none;
-  z-index: 0;
+  display: none;
 }
 
-@media (max-width: 767.98px) {
-  .login-left-overlay {
-    background: rgba(2, 11, 24, 0.72);
-  }
-}
-
-.login-left-content {
-  position: relative;
-  z-index: 1;
-  padding: 48px;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  max-width: 420px;
-}
-
-.brand-logo {
-  width: min(250px, 100%);
-  max-width: 250px;
-  display: block;
-  margin-bottom: 84px;
-}
-
-.brand-logo svg {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-/* Floating logo container (hidden by default) */
-.brand-logo svg {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-.brand-heading {
-  color: #F8FAFC;
-  font-size: clamp(3rem, 4vw, 3.5rem);
-  line-height: 1.02;
-  font-weight: 800;
-  max-width: 420px;
-}
-
-.brand-copy {
-  color: #94A3B8;
-  font-size: clamp(0.95rem, 1vw, 1rem);
-  line-height: 1.6;
-  max-width: 400px;
-  margin-top: 16px;
-}
-
-/* When auth-container is in register mode, show the brand/logo at the top-right
-   of the visual panel while keeping the same markup. Keep mobile behavior unchanged. */
-.auth-container.mode-register .login-left-content {
-  align-items: flex-end;
-  padding-right: 70px;
-  padding-left: 48px;
-  padding-top: 70px;
-}
-
-.auth-container.mode-register .brand-logo {
-  margin-bottom: 20px;
-  max-width: 220px;
-}
-
-.auth-container.mode-register .login-left-welcome {
-  align-items: flex-end;
-  text-align: right;
-}
-
-@media (max-width: 767.98px) {
-  /* On mobile revert to original left-aligned layout */
-  .auth-container.mode-register .login-left-content {
-    align-items: flex-start;
-    padding-right: 48px;
-    padding-top: 48px;
-  }
-
-  .auth-container.mode-register .login-left-welcome {
-    align-items: flex-start;
-    text-align: left;
-  }
-
-  /* On mobile keep normal inline logo behavior */
-  .auth-container.mode-register .login-left-content .brand-logo {
-    display: block;
-  }
-}
 
 .login-right-panel {
   background: var(--panel-right);
