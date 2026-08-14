@@ -6,15 +6,28 @@ import { getLevelsApi } from '../../api/levelsApi';
 import {
   changeCourseStatusApi,
   createCourseApi,
+  deleteCourseApi,
   getCoursesApi,
   getMyCoursesApi,
+  updateCourseApi,
 } from '../../api/coursesApi';
-import { createLessonApi, deleteLessonApi, getLessonsApi } from '../../api/lessonsApi';
+import {
+  createLessonApi,
+  deleteLessonApi,
+  getLessonsApi,
+  updateLessonApi,
+} from '../../api/lessonsApi';
 import { getUsersApi } from '../../api/usersApi';
+import { LessonListPanel } from '../../components/domain/LessonListPanel';
 import { getApiErrorMessage } from '../../utils/apiErrors';
 import { isAdminRole, normalizePlatformRole } from '../../utils/coursePermissions';
 import type { Category } from '../../types/category';
-import type { CourseAdminCreateRequest, CourseCreateRequest, CourseListItem } from '../../types/course';
+import type {
+  CourseAdminCreateRequest,
+  CourseCreateRequest,
+  CourseListItem,
+  CourseUpdateRequest,
+} from '../../types/course';
 import type { Level } from '../../types/level';
 import type { Lesson, LessonRequest } from '../../types/lesson';
 import type { AdminUser } from '../../types/user';
@@ -22,6 +35,8 @@ import './DomainShared.css';
 
 export interface ManageCoursesPageProps {
   variant: 'instructor' | 'admin';
+  /** Si viene desde el dashboard, abre el form de nuevo curso al montar */
+  initialOpenCreate?: boolean;
 }
 
 type CourseFormState = {
@@ -52,7 +67,13 @@ const isInstructorUser = (userItem: AdminUser): boolean =>
 
 const normalizeCourseStatus = (estado: string): string => estado.trim().toLowerCase();
 
-export const ManageCoursesPage = ({ variant }: ManageCoursesPageProps) => {
+const nextLessonOrden = (lessons: Lesson[]): number =>
+  lessons.reduce((max, lesson) => Math.max(max, lesson.orden), 0) + 1;
+
+export const ManageCoursesPage = ({
+  variant,
+  initialOpenCreate = false,
+}: ManageCoursesPageProps) => {
   const { user } = useAuth();
   const platformRole = normalizePlatformRole(user?.rol);
   const isAdminVariant = variant === 'admin';
@@ -71,13 +92,17 @@ export const ManageCoursesPage = ({ variant }: ManageCoursesPageProps) => {
   const [loadError, setLoadError] = useState('');
   const [feedback, setFeedback] = useState('');
 
-  const [isCourseFormOpen, setIsCourseFormOpen] = useState(false);
+  const [isCourseFormOpen, setIsCourseFormOpen] = useState(initialOpenCreate);
+  const [editingCourseId, setEditingCourseId] = useState<number | null>(null);
   const [courseForm, setCourseForm] = useState<CourseFormState>(emptyCourseForm);
   const [isSavingCourse, setIsSavingCourse] = useState(false);
   const [courseSaveError, setCourseSaveError] = useState('');
   const [statusUpdatingId, setStatusUpdatingId] = useState<number | null>(null);
+  const [deletingCourseId, setDeletingCourseId] = useState<number | null>(null);
 
   const [isLessonFormOpen, setIsLessonFormOpen] = useState(false);
+  const [lessonFormMode, setLessonFormMode] = useState<'create' | 'edit'>('create');
+  const [editingLessonId, setEditingLessonId] = useState<number | null>(null);
   const [lessonForm, setLessonForm] = useState<LessonRequest>(emptyLessonForm);
   const [isSavingLesson, setIsSavingLesson] = useState(false);
   const [lessonSaveError, setLessonSaveError] = useState('');
@@ -149,6 +174,8 @@ export const ManageCoursesPage = ({ variant }: ManageCoursesPageProps) => {
   useEffect(() => {
     if (selectedCourseId == null) {
       setLessons([]);
+      setIsLessonFormOpen(false);
+      setEditingLessonId(null);
       return;
     }
 
@@ -158,7 +185,7 @@ export const ManageCoursesPage = ({ variant }: ManageCoursesPageProps) => {
   if (!canAccess) {
     return (
       <section className="domain-page" aria-labelledby="manage-courses-title">
-        <h1 id="manage-courses-title">{isAdminVariant ? 'Cursos' : 'Mis clases'}</h1>
+        <h1 id="manage-courses-title">{isAdminVariant ? 'Cursos' : 'Mis cursos'}</h1>
         <div className="domain-alert domain-alert-error" role="alert">
           <strong>Acceso no permitido</strong>
           <span>No tienes permisos para realizar esta acción.</span>
@@ -167,12 +194,36 @@ export const ManageCoursesPage = ({ variant }: ManageCoursesPageProps) => {
     );
   }
 
+  const openCreateCourseForm = () => {
+    setEditingCourseId(null);
+    setCourseForm(emptyCourseForm);
+    setIsCourseFormOpen(true);
+    setCourseSaveError('');
+  };
+
+  const openEditCourseForm = (course: CourseListItem) => {
+    const category = categories.find((item) => item.nombre === course.categoriaNombre);
+    const level = levels.find((item) => item.nombre === course.nivelNombre);
+
+    setEditingCourseId(course.id);
+    setCourseForm({
+      titulo: course.titulo,
+      descripcionCorta: course.descripcionCorta ?? '',
+      idCategoria: category ? String(category.id) : '',
+      idNivel: level ? String(level.id) : '',
+      idInstructor: '',
+    });
+    setIsCourseFormOpen(true);
+    setCourseSaveError('');
+    setFeedback('');
+  };
+
   const handleCourseSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSavingCourse(true);
     setCourseSaveError('');
 
-    const payload: CourseCreateRequest = {
+    const payload: CourseCreateRequest | CourseUpdateRequest = {
       titulo: courseForm.titulo.trim(),
       descripcionCorta: courseForm.descripcionCorta.trim() || null,
       idCategoria: Number(courseForm.idCategoria),
@@ -180,22 +231,34 @@ export const ManageCoursesPage = ({ variant }: ManageCoursesPageProps) => {
     };
 
     try {
-      if (isAdminVariant) {
+      if (editingCourseId != null) {
+        await updateCourseApi(editingCourseId, payload);
+        setFeedback(`Curso "${payload.titulo}" actualizado.`);
+      } else if (isAdminVariant) {
         const adminPayload: CourseAdminCreateRequest = {
           ...payload,
           idInstructor: courseForm.idInstructor.trim(),
         };
         await createCourseApi(adminPayload);
+        setFeedback(`Curso "${payload.titulo}" creado en borrador.`);
       } else {
         await createCourseApi(payload);
+        setFeedback(`Curso "${payload.titulo}" creado en borrador.`);
       }
 
-      setFeedback(`Curso "${payload.titulo}" creado en borrador.`);
       setCourseForm(emptyCourseForm);
+      setEditingCourseId(null);
       setIsCourseFormOpen(false);
       await loadCourses();
     } catch (error) {
-      setCourseSaveError(getApiErrorMessage(error, 'No se pudo crear el curso. Intenta de nuevo.'));
+      setCourseSaveError(
+        getApiErrorMessage(
+          error,
+          editingCourseId != null
+            ? 'No se pudo actualizar el curso. Intenta de nuevo.'
+            : 'No se pudo crear el curso. Intenta de nuevo.',
+        ),
+      );
     } finally {
       setIsSavingCourse(false);
     }
@@ -221,6 +284,50 @@ export const ManageCoursesPage = ({ variant }: ManageCoursesPageProps) => {
     }
   };
 
+  const handleDeleteCourse = async (course: CourseListItem) => {
+    const confirmed = window.confirm(
+      `¿Eliminar el curso "${course.titulo}"? Esta acción no se puede deshacer.`,
+    );
+    if (!confirmed) return;
+
+    setDeletingCourseId(course.id);
+    setFeedback('');
+
+    try {
+      await deleteCourseApi(course.id);
+      setFeedback(`Curso "${course.titulo}" eliminado.`);
+      if (selectedCourseId === course.id) {
+        setSelectedCourseId(null);
+      }
+      await loadCourses();
+    } catch (error) {
+      setLoadError(getApiErrorMessage(error, 'No se pudo eliminar el curso.'));
+    } finally {
+      setDeletingCourseId(null);
+    }
+  };
+
+  const openLessonCreate = () => {
+    setLessonFormMode('create');
+    setEditingLessonId(null);
+    setLessonForm({ ...emptyLessonForm, orden: nextLessonOrden(lessons) });
+    setLessonSaveError('');
+    setIsLessonFormOpen(true);
+  };
+
+  const openLessonEdit = (lesson: Lesson) => {
+    setLessonFormMode('edit');
+    setEditingLessonId(lesson.id);
+    setLessonForm({
+      titulo: lesson.titulo,
+      descripcion: lesson.descripcion ?? '',
+      recurso: lesson.recurso ?? '',
+      orden: lesson.orden,
+    });
+    setLessonSaveError('');
+    setIsLessonFormOpen(true);
+  };
+
   const handleLessonSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (selectedCourseId == null) return;
@@ -228,19 +335,30 @@ export const ManageCoursesPage = ({ variant }: ManageCoursesPageProps) => {
     setIsSavingLesson(true);
     setLessonSaveError('');
 
+    const payload: LessonRequest = {
+      titulo: lessonForm.titulo.trim(),
+      descripcion: lessonForm.descripcion?.trim() || null,
+      recurso: lessonForm.recurso?.trim() || null,
+      orden: lessonForm.orden,
+    };
+
     try {
-      await createLessonApi(selectedCourseId, {
-        titulo: lessonForm.titulo.trim(),
-        descripcion: lessonForm.descripcion?.trim() || null,
-        recurso: lessonForm.recurso?.trim() || null,
-        orden: lessonForm.orden,
-      });
-      setFeedback(`Lección "${lessonForm.titulo}" creada.`);
-      setLessonForm({ ...emptyLessonForm, orden: lessons.length + 1 });
+      if (lessonFormMode === 'edit' && editingLessonId != null) {
+        await updateLessonApi(selectedCourseId, editingLessonId, payload);
+        setFeedback(`Lección "${payload.titulo}" actualizada.`);
+      } else {
+        await createLessonApi(selectedCourseId, payload);
+        setFeedback(`Lección "${payload.titulo}" creada.`);
+      }
+
       setIsLessonFormOpen(false);
+      setEditingLessonId(null);
+      setLessonForm({ ...emptyLessonForm, orden: nextLessonOrden(lessons) });
       await loadLessons(selectedCourseId);
     } catch (error) {
-      setLessonSaveError(getApiErrorMessage(error, 'No se pudo crear la lección. Intenta de nuevo.'));
+      setLessonSaveError(
+        getApiErrorMessage(error, 'No se pudo guardar la lección. Intenta de nuevo.'),
+      );
     } finally {
       setIsSavingLesson(false);
     }
@@ -248,6 +366,9 @@ export const ManageCoursesPage = ({ variant }: ManageCoursesPageProps) => {
 
   const handleDeleteLesson = async (lesson: Lesson) => {
     if (selectedCourseId == null) return;
+
+    const confirmed = window.confirm(`¿Eliminar la lección "${lesson.titulo}"?`);
+    if (!confirmed) return;
 
     setDeletingLessonId(lesson.id);
     setFeedback('');
@@ -263,10 +384,17 @@ export const ManageCoursesPage = ({ variant }: ManageCoursesPageProps) => {
     }
   };
 
-  const pageTitle = isAdminVariant ? 'Cursos' : 'Mis clases';
+  const selectCourseForLessons = (courseId: number) => {
+    setSelectedCourseId(courseId);
+    setFeedback('');
+    setIsLessonFormOpen(false);
+    setEditingLessonId(null);
+  };
+
+  const pageTitle = isAdminVariant ? 'Cursos' : 'Mis cursos';
   const pageDescription = isAdminVariant
-    ? 'Crea cursos, asigna instructores y gestiona lecciones.'
-    : 'Crea tus cursos, publícalos y administra sus lecciones.';
+    ? 'Crea cursos, publícalos y administra lecciones por curso.'
+    : 'Crea tus cursos, añade lecciones y publícalos cuando estén listos.';
 
   return (
     <section className="domain-page" aria-labelledby="manage-courses-title">
@@ -279,13 +407,22 @@ export const ManageCoursesPage = ({ variant }: ManageCoursesPageProps) => {
           type="button"
           className="domain-btn-primary"
           onClick={() => {
-            setIsCourseFormOpen((open) => !open);
-            setCourseSaveError('');
+            if (isCourseFormOpen && editingCourseId == null) {
+              setIsCourseFormOpen(false);
+              setCourseSaveError('');
+              return;
+            }
+            openCreateCourseForm();
           }}
         >
-          {isCourseFormOpen ? 'Cerrar formulario' : 'Nuevo curso'}
+          {isCourseFormOpen && editingCourseId == null ? 'Cerrar formulario' : 'Nuevo curso'}
         </button>
       </header>
+
+      <p className="domain-alert domain-alert-info" role="note">
+        Flujo recomendado: crea el curso → abre <strong>Lecciones</strong> → añade contenido →
+        publica.
+      </p>
 
       {feedback && (
         <p className="domain-alert domain-alert-success" role="status">
@@ -295,13 +432,14 @@ export const ManageCoursesPage = ({ variant }: ManageCoursesPageProps) => {
 
       {isCourseFormOpen && (
         <form className="domain-form" onSubmit={(event) => void handleCourseSubmit(event)}>
-          <h2>Crear curso</h2>
+          <h2>{editingCourseId != null ? 'Editar curso' : 'Crear curso'}</h2>
 
           <label className="domain-field">
             <span>Título</span>
             <input
               type="text"
               required
+              minLength={5}
               value={courseForm.titulo}
               onChange={(event) =>
                 setCourseForm((current) => ({ ...current, titulo: event.target.value }))
@@ -358,23 +496,12 @@ export const ManageCoursesPage = ({ variant }: ManageCoursesPageProps) => {
             </label>
           </div>
 
-          {isAdminVariant && (
+          {isAdminVariant && editingCourseId == null && (
             <>
               <label className="domain-field">
-                <span>Instructor (ID de usuario)</span>
-                <input
-                  type="text"
-                  value={courseForm.idInstructor}
-                  onChange={(event) =>
-                    setCourseForm((current) => ({ ...current, idInstructor: event.target.value }))
-                  }
-                  placeholder="UUID del instructor"
-                />
-              </label>
-
-              <label className="domain-field">
-                <span>O selecciona instructor</span>
+                <span>Instructor</span>
                 <select
+                  required
                   value={courseForm.idInstructor}
                   onChange={(event) =>
                     setCourseForm((current) => ({ ...current, idInstructor: event.target.value }))
@@ -403,6 +530,7 @@ export const ManageCoursesPage = ({ variant }: ManageCoursesPageProps) => {
               className="domain-btn-ghost"
               onClick={() => {
                 setIsCourseFormOpen(false);
+                setEditingCourseId(null);
                 setCourseSaveError('');
               }}
             >
@@ -413,10 +541,14 @@ export const ManageCoursesPage = ({ variant }: ManageCoursesPageProps) => {
               className="domain-btn-primary"
               disabled={
                 isSavingCourse ||
-                (isAdminVariant && !courseForm.idInstructor.trim())
+                (isAdminVariant && editingCourseId == null && !courseForm.idInstructor.trim())
               }
             >
-              {isSavingCourse ? 'Guardando…' : 'Crear curso'}
+              {isSavingCourse
+                ? 'Guardando…'
+                : editingCourseId != null
+                  ? 'Guardar cambios'
+                  : 'Crear curso'}
             </button>
           </div>
         </form>
@@ -434,17 +566,24 @@ export const ManageCoursesPage = ({ variant }: ManageCoursesPageProps) => {
           </button>
         </div>
       ) : courses.length === 0 ? (
-        <p className="domain-state">Todavía no hay cursos. Crea el primero.</p>
+        <div className="domain-state domain-empty">
+          <strong>Todavía no hay cursos</strong>
+          <span>Crea el primero y luego añade lecciones antes de publicar.</span>
+          <button type="button" className="domain-btn-primary" onClick={openCreateCourseForm}>
+            Nuevo curso
+          </button>
+        </div>
       ) : (
         <div className="domain-card-grid">
           {courses.map((course) => {
             const isPublished = normalizeCourseStatus(course.estado) === 'publicado';
+            const isSelected = selectedCourseId === course.id;
 
             return (
               <article
                 key={course.id}
-                className="domain-card"
-                aria-current={selectedCourseId === course.id ? 'true' : undefined}
+                className={`domain-card ${isSelected ? 'is-selected' : ''}`}
+                aria-current={isSelected ? 'true' : undefined}
               >
                 <span
                   className={`domain-badge ${isPublished ? 'domain-badge-success' : 'domain-badge-muted'}`}
@@ -460,22 +599,37 @@ export const ManageCoursesPage = ({ variant }: ManageCoursesPageProps) => {
                 <div className="domain-card-actions">
                   <button
                     type="button"
-                    className="domain-btn-ghost"
-                    onClick={() => setSelectedCourseId(course.id)}
+                    className="domain-btn-primary"
+                    onClick={() => selectCourseForLessons(course.id)}
                   >
-                    {selectedCourseId === course.id ? 'Seleccionado' : 'Gestionar lecciones'}
+                    {isSelected ? 'Lecciones (activo)' : 'Lecciones'}
                   </button>
                   <button
                     type="button"
-                    className="domain-btn-primary"
+                    className="domain-btn-ghost"
                     disabled={statusUpdatingId === course.id}
                     onClick={() => void handleToggleStatus(course)}
                   >
                     {statusUpdatingId === course.id
                       ? 'Actualizando…'
                       : isPublished
-                        ? 'Pasar a borrador'
+                        ? 'A borrador'
                         : 'Publicar'}
+                  </button>
+                  <button
+                    type="button"
+                    className="domain-btn-ghost"
+                    onClick={() => openEditCourseForm(course)}
+                  >
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    className="domain-btn-danger"
+                    disabled={deletingCourseId === course.id}
+                    onClick={() => void handleDeleteCourse(course)}
+                  >
+                    {deletingCourseId === course.id ? 'Eliminando…' : 'Eliminar'}
                   </button>
                 </div>
               </article>
@@ -485,157 +639,30 @@ export const ManageCoursesPage = ({ variant }: ManageCoursesPageProps) => {
       )}
 
       {selectedCourse && (
-        <section className="domain-section" aria-labelledby="lessons-section-title">
-          <div className="domain-toolbar">
-            <div>
-              <h2 id="lessons-section-title">Lecciones de {selectedCourse.titulo}</h2>
-            </div>
-            <button
-              type="button"
-              className="domain-btn-primary"
-              onClick={() => {
-                setIsLessonFormOpen((open) => !open);
-                setLessonForm({ ...emptyLessonForm, orden: lessons.length + 1 });
-                setLessonSaveError('');
-              }}
-            >
-              {isLessonFormOpen ? 'Cerrar formulario' : 'Nueva lección'}
-            </button>
-          </div>
-
-          {isLessonFormOpen && (
-            <form className="domain-form" onSubmit={(event) => void handleLessonSubmit(event)}>
-              <h2>Crear lección</h2>
-
-              <label className="domain-field">
-                <span>Título</span>
-                <input
-                  type="text"
-                  required
-                  value={lessonForm.titulo}
-                  onChange={(event) =>
-                    setLessonForm((current) => ({ ...current, titulo: event.target.value }))
-                  }
-                />
-              </label>
-
-              <div className="domain-form-grid">
-                <label className="domain-field">
-                  <span>Orden</span>
-                  <input
-                    type="number"
-                    required
-                    min={1}
-                    value={lessonForm.orden}
-                    onChange={(event) =>
-                      setLessonForm((current) => ({
-                        ...current,
-                        orden: Number(event.target.value),
-                      }))
-                    }
-                  />
-                </label>
-
-                <label className="domain-field">
-                  <span>Recurso</span>
-                  <input
-                    type="text"
-                    value={lessonForm.recurso ?? ''}
-                    onChange={(event) =>
-                      setLessonForm((current) => ({ ...current, recurso: event.target.value }))
-                    }
-                  />
-                </label>
-              </div>
-
-              <label className="domain-field">
-                <span>Descripción</span>
-                <textarea
-                  rows={3}
-                  value={lessonForm.descripcion ?? ''}
-                  onChange={(event) =>
-                    setLessonForm((current) => ({ ...current, descripcion: event.target.value }))
-                  }
-                />
-              </label>
-
-              {lessonSaveError && (
-                <p className="domain-inline-error" role="alert">
-                  {lessonSaveError}
-                </p>
-              )}
-
-              <div className="domain-form-actions">
-                <button
-                  type="button"
-                  className="domain-btn-ghost"
-                  onClick={() => {
-                    setIsLessonFormOpen(false);
-                    setLessonSaveError('');
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button type="submit" className="domain-btn-primary" disabled={isSavingLesson}>
-                  {isSavingLesson ? 'Guardando…' : 'Crear lección'}
-                </button>
-              </div>
-            </form>
-          )}
-
-          {isLoadingLessons ? (
-            <p className="domain-state" role="status">
-              Cargando lecciones…
-            </p>
-          ) : lessonsError ? (
-            <div className="domain-alert domain-alert-error" role="alert">
-              <span>{lessonsError}</span>
-              <button
-                type="button"
-                className="domain-btn-ghost"
-                onClick={() => selectedCourseId && void loadLessons(selectedCourseId)}
-              >
-                Reintentar
-              </button>
-            </div>
-          ) : lessons.length === 0 ? (
-            <p className="domain-state">Este curso aún no tiene lecciones.</p>
-          ) : (
-            <div className="domain-table-wrapper">
-              <table className="domain-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Orden</th>
-                    <th scope="col">Título</th>
-                    <th scope="col">Recurso</th>
-                    <th scope="col">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {lessons.map((lesson) => (
-                    <tr key={lesson.id}>
-                      <td>{lesson.orden}</td>
-                      <td>{lesson.titulo}</td>
-                      <td>{lesson.recurso || '—'}</td>
-                      <td>
-                        <div className="domain-row-actions">
-                          <button
-                            type="button"
-                            className="domain-btn-danger"
-                            disabled={deletingLessonId === lesson.id}
-                            onClick={() => void handleDeleteLesson(lesson)}
-                          >
-                            {deletingLessonId === lesson.id ? 'Eliminando…' : 'Eliminar'}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
+        <LessonListPanel
+          courseTitle={selectedCourse.titulo}
+          lessons={lessons}
+          isLoading={isLoadingLessons}
+          error={lessonsError}
+          isFormOpen={isLessonFormOpen}
+          formMode={lessonFormMode}
+          formValue={lessonForm}
+          formError={lessonSaveError}
+          isSaving={isSavingLesson}
+          deletingLessonId={deletingLessonId}
+          onRetry={() => void loadLessons(selectedCourse.id)}
+          onClosePanel={() => setSelectedCourseId(null)}
+          onOpenCreate={openLessonCreate}
+          onFormChange={setLessonForm}
+          onFormCancel={() => {
+            setIsLessonFormOpen(false);
+            setEditingLessonId(null);
+            setLessonSaveError('');
+          }}
+          onFormSubmit={(event) => void handleLessonSubmit(event)}
+          onEditLesson={openLessonEdit}
+          onDeleteLesson={(lesson) => void handleDeleteLesson(lesson)}
+        />
       )}
     </section>
   );
