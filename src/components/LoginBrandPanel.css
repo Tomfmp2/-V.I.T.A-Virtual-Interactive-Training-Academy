@@ -1,0 +1,160 @@
+.login-left-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: stretch;
+  overflow: hidden;
+  min-height: 380px;
+  background: #071018;
+  border: none;
+  box-shadow: none;
+}
+
+.login-left-media {
+  position: absolute;
+  inset: 0;
+  background-image: url('../assets/imagen-fondo-1.jpg');
+  background-size: cover;
+  background-position: center;
+  transform: scale(1.02);
+  filter: saturate(0.72) brightness(0.78);
+}
+
+.login-left-shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(7, 16, 24, 0.55) 0%, rgba(7, 16, 24, 0.78) 48%, rgba(7, 16, 24, 0.92) 100%),
+    linear-gradient(90deg, rgba(7, 16, 24, 0.55) 0%, rgba(7, 16, 24, 0.2) 55%, rgba(7, 16, 24, 0.45) 100%);
+  pointer-events: none;
+}
+
+.login-left-content {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2.5rem;
+  padding: clamp(1.75rem, 4vw, 3rem);
+  max-width: 34rem;
+}
+
+.login-left-top {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.login-brand-mark {
+  display: inline-flex;
+  max-width: min(220px, 100%);
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.login-brand-mark .brand-logo-svg {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+/* LEARNING HUB del SVG se ve mejor en fondos oscuros del auth panel */
+.login-brand-mark .brand-logo-svg text:last-child {
+  fill: #94a3b8;
+}
+
+.login-left-kicker {
+  margin: 0;
+  color: rgba(148, 163, 184, 0.95);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.login-left-welcome {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding-bottom: 0.25rem;
+}
+
+.login-left-panel .brand-heading {
+  margin: 0;
+  max-width: 11ch;
+  color: #f8fafc;
+  font-size: clamp(2.1rem, 3.4vw, 3rem);
+  line-height: 1.08;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+}
+
+.login-left-panel .brand-copy {
+  margin: 0;
+  max-width: 34ch;
+  color: #94a3b8;
+  font-size: 0.98rem;
+  line-height: 1.65;
+}
+
+.login-left-points {
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.login-left-points li {
+  color: #cbd5e1;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  padding-left: 0.85rem;
+  border-left: 2px solid rgba(0, 230, 118, 0.45);
+}
+
+/* Register: mismo panel, copy distinto; sin voltear tipografía */
+.login-left-panel.is-register .login-left-content {
+  align-items: flex-start;
+  text-align: left;
+}
+
+@media (max-width: 1023.98px) {
+  .login-left-panel {
+    min-height: 320px;
+  }
+
+  .login-left-content {
+    max-width: none;
+    gap: 2rem;
+  }
+
+  .login-left-panel .brand-heading {
+    max-width: 14ch;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .login-left-panel {
+    min-height: 280px;
+    border-radius: 0.75rem;
+  }
+
+  .login-left-content {
+    gap: 1.5rem;
+    padding: 1.35rem 1.2rem 1.5rem;
+  }
+
+  .login-brand-mark {
+    max-width: 180px;
+  }
+
+  .login-left-points {
+    display: none;
+  }
+}

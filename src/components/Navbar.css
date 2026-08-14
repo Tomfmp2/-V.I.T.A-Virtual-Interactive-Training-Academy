@@ -1,0 +1,86 @@
+.vita-navbar {
+  width: 100%;
+  box-sizing: border-box;
+  background: #0d1524;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.vita-navbar-inner {
+  width: 100%;
+  max-width: none;
+  min-height: 68px;
+  margin: 0;
+  padding: 0 24px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.vita-navbar-brand {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.vita-navbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.vita-navbar-ghost,
+.vita-navbar-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  padding: 0.5rem 0.95rem;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.vita-navbar-ghost {
+  border: 0;
+  background: transparent;
+  color: #cbd5e1;
+}
+
+.vita-navbar-ghost:hover {
+  background: rgba(148, 163, 184, 0.08);
+  color: #f8fafc;
+}
+
+.vita-navbar-cta {
+  border: 0;
+  background: #00e676;
+  color: #0f172a;
+}
+
+.vita-navbar-cta:hover {
+  background: #10B981;
+  color: #021022;
+}
+
+@media (max-width: 640px) {
+  .vita-navbar-inner {
+    padding: 0 12px;
+    min-height: 60px;
+  }
+
+  .vita-navbar-ghost,
+  .vita-navbar-cta {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.8rem;
+  }
+}
