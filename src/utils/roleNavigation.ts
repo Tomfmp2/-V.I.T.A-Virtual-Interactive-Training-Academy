@@ -27,15 +27,15 @@ const navItemsByRole: Record<PlatformRole, RoleNavItem[]> = {
   ],
   instructor: [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { id: 'my-courses', label: 'Mis Clases', icon: 'courses' },
+    { id: 'my-courses', label: 'Mis cursos', icon: 'courses' },
     { id: 'explore', label: 'Explorar', icon: 'explore' },
     { id: 'reports', label: 'Reportes', icon: 'reports' },
     { id: 'settings', label: 'Configuración', icon: 'settings' },
   ],
   estudiante: [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { id: 'explore', label: 'Explorar', icon: 'explore' },
-    { id: 'my-courses', label: 'Mis Cursos', icon: 'courses' },
+    { id: 'explore', label: 'Explorar catálogo', icon: 'explore' },
+    { id: 'my-courses', label: 'Mis inscripciones', icon: 'courses' },
     { id: 'settings', label: 'Configuración', icon: 'settings' },
   ],
 };

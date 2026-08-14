@@ -1,26 +1,52 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getCoursesApi } from '../../api/coursesApi';
 import { enrollApi } from '../../api/enrollmentsApi';
+import { CoursePlayerView } from '../../components/domain/CoursePlayerView';
 import { resolveEnrollmentError } from '../../utils/apiErrors';
+import { matchesCourseSearch } from '../../utils/courseSearch';
 import type { CourseListItem } from '../../types/course';
 import './DomainShared.css';
 
 export interface ExploreCoursesPageProps {
   mode?: 'enroll' | 'browse';
+  searchTerm?: string;
+  onSearchTermChange?: (value: string) => void;
 }
 
 const isPublishedCourse = (course: CourseListItem): boolean =>
   course.estado.trim().toLowerCase() === 'publicado';
 
-export const ExploreCoursesPage = ({ mode = 'enroll' }: ExploreCoursesPageProps) => {
+export const ExploreCoursesPage = ({
+  mode = 'enroll',
+  searchTerm: externalSearch,
+  onSearchTermChange,
+}: ExploreCoursesPageProps) => {
   const [courses, setCourses] = useState<CourseListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [feedback, setFeedback] = useState('');
   const [enrollingCourseId, setEnrollingCourseId] = useState<number | null>(null);
   const [enrollErrors, setEnrollErrors] = useState<Record<number, string>>({});
+  const [searchTerm, setSearchTerm] = useState(externalSearch ?? '');
+  const [openCourse, setOpenCourse] = useState<{ id: number; title: string } | null>(null);
+
+  useEffect(() => {
+    if (externalSearch !== undefined) {
+      setSearchTerm(externalSearch);
+    }
+  }, [externalSearch]);
 
   const publishedCourses = useMemo(() => courses.filter(isPublishedCourse), [courses]);
+
+  const filteredCourses = useMemo(
+    () => publishedCourses.filter((course) => matchesCourseSearch(course, searchTerm)),
+    [publishedCourses, searchTerm],
+  );
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    onSearchTermChange?.(value);
+  };
 
   const loadCourses = useCallback(async () => {
     setIsLoading(true);
@@ -64,6 +90,17 @@ export const ExploreCoursesPage = ({ mode = 'enroll' }: ExploreCoursesPageProps)
 
   const showEnrollActions = mode === 'enroll';
 
+  if (openCourse) {
+    return (
+      <CoursePlayerView
+        courseId={openCourse.id}
+        fallbackTitle={openCourse.title}
+        backLabel="Volver al catálogo"
+        onBack={() => setOpenCourse(null)}
+      />
+    );
+  }
+
   return (
     <section className="domain-page" aria-labelledby="explore-courses-title">
       <header className="domain-heading">
@@ -71,8 +108,8 @@ export const ExploreCoursesPage = ({ mode = 'enroll' }: ExploreCoursesPageProps)
           <h1 id="explore-courses-title">Explorar cursos</h1>
           <p>
             {showEnrollActions
-              ? 'Descubre cursos publicados e inscríbete con un clic.'
-              : 'Consulta el catálogo de cursos publicados.'}
+              ? 'Inscríbete o abre un curso para ver sus lecciones.'
+              : 'Consulta el catálogo y abre el contenido de cada curso.'}
           </p>
         </div>
       </header>
@@ -82,6 +119,19 @@ export const ExploreCoursesPage = ({ mode = 'enroll' }: ExploreCoursesPageProps)
           {feedback}
         </p>
       )}
+
+      <div className="domain-toolbar">
+        <label className="domain-field" style={{ marginBottom: 0, flex: '1 1 240px' }}>
+          <span>Buscar en el catálogo</span>
+          <input
+            type="search"
+            value={searchTerm}
+            onChange={(event) => handleSearchChange(event.target.value)}
+            placeholder="Título, categoría, nivel o instructor"
+            aria-label="Buscar cursos"
+          />
+        </label>
+      </div>
 
       {isLoading ? (
         <p className="domain-state" role="status">
@@ -95,27 +145,33 @@ export const ExploreCoursesPage = ({ mode = 'enroll' }: ExploreCoursesPageProps)
           </button>
         </div>
       ) : publishedCourses.length === 0 ? (
-        <p className="domain-state">
-          No hay cursos publicados disponibles en este momento.
-        </p>
+        <div className="domain-state domain-empty">
+          <strong>No hay cursos publicados</strong>
+          <span>Vuelve más tarde o pide a un instructor que publique contenido.</span>
+        </div>
+      ) : filteredCourses.length === 0 ? (
+        <p className="domain-state">Ningún curso coincide con “{searchTerm}”.</p>
       ) : (
         <div className="domain-card-grid">
-          {publishedCourses.map((course) => (
+          {filteredCourses.map((course) => (
             <article key={course.id} className="domain-card">
               <span className="domain-badge domain-badge-cyan">{course.categoriaNombre}</span>
               <h2 className="domain-card-title">{course.titulo}</h2>
               <p className="domain-card-meta">
                 {course.descripcionCorta || 'Sin descripción corta.'}
               </p>
-              <p className="domain-card-meta">
-                Instructor: {course.instructorNombre}
-              </p>
-              <p className="domain-card-meta">
-                Nivel: {course.nivelNombre}
-              </p>
+              <p className="domain-card-meta">Instructor: {course.instructorNombre}</p>
+              <p className="domain-card-meta">Nivel: {course.nivelNombre}</p>
 
-              {showEnrollActions && (
-                <div className="domain-card-actions">
+              <div className="domain-card-actions">
+                <button
+                  type="button"
+                  className="domain-btn-ghost"
+                  onClick={() => setOpenCourse({ id: course.id, title: course.titulo })}
+                >
+                  Ver lecciones
+                </button>
+                {showEnrollActions && (
                   <button
                     type="button"
                     className="domain-btn-primary"
@@ -124,8 +180,8 @@ export const ExploreCoursesPage = ({ mode = 'enroll' }: ExploreCoursesPageProps)
                   >
                     {enrollingCourseId === course.id ? 'Inscribiendo…' : 'Inscribirme'}
                   </button>
-                </div>
-              )}
+                )}
+              </div>
 
               {enrollErrors[course.id] && (
                 <p className="domain-inline-error" role="alert">

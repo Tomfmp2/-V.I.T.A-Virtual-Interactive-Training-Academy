@@ -9,10 +9,11 @@ import { MyEnrollmentsPage } from './domain/MyEnrollmentsPage';
 import { ManageCoursesPage } from './domain/ManageCoursesPage';
 import { UsersPage } from './domain/UsersPage';
 import { ReportsPage } from './domain/ReportsPage';
+import { StudentDashboard } from './dashboard/StudentDashboard';
+import { InstructorDashboard } from './dashboard/InstructorDashboard';
+import { AdminDashboard } from './dashboard/AdminDashboard';
 import { logoutApi } from '../api/authApi';
-import { getMyEnrollmentsApi } from '../api/enrollmentsApi';
-import { getMyCoursesApi, getCoursesApi } from '../api/coursesApi';
-import { getCoursePermissions, normalizePlatformRole } from '../utils/coursePermissions';
+import { normalizePlatformRole } from '../utils/coursePermissions';
 import { getRoleAreaLabel, getRoleNavItems } from '../utils/roleNavigation';
 import './HomePage.css';
 
@@ -232,8 +233,7 @@ export const HomePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [dashboardCount, setDashboardCount] = useState(0);
-  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [openCreateCourse, setOpenCreateCourse] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const userWithLastName = user as (typeof user & { apellido?: string }) | null;
@@ -242,7 +242,6 @@ export const HomePage = () => {
     .join(' ') || 'Usuario';
   const displayEmail = user?.email?.trim() || 'Correo no disponible';
   const displayRole = user?.rol?.trim() || 'No especificado';
-  const coursePermissions = getCoursePermissions(user?.rol);
   const navItems = getRoleNavItems(user?.rol);
   const areaLabel = getRoleAreaLabel(user?.rol);
 
@@ -275,38 +274,6 @@ export const HomePage = () => {
     };
   }, []);
 
-  useEffect(() => {
-    if (active !== 'dashboard' || !isAuthenticated) return;
-
-    let cancelled = false;
-    const loadStats = async () => {
-      setDashboardLoading(true);
-      try {
-        if (platformRole === 'estudiante') {
-          const list = await getMyEnrollmentsApi();
-          if (!cancelled) setDashboardCount(list.length);
-        } else if (platformRole === 'instructor') {
-          const list = await getMyCoursesApi();
-          if (!cancelled) setDashboardCount(list.length);
-        } else if (platformRole === 'admin') {
-          const list = await getCoursesApi();
-          if (!cancelled) setDashboardCount(list.length);
-        } else if (!cancelled) {
-          setDashboardCount(0);
-        }
-      } catch {
-        if (!cancelled) setDashboardCount(0);
-      } finally {
-        if (!cancelled) setDashboardLoading(false);
-      }
-    };
-
-    void loadStats();
-    return () => {
-      cancelled = true;
-    };
-  }, [active, isAuthenticated, platformRole]);
-
   const handleLogout = async () => {
     try {
       await logoutApi();
@@ -317,13 +284,37 @@ export const HomePage = () => {
     navigate('/login');
   };
 
-  const handleNavClick = (itemId: string) => {
+  const handleNavClick = (
+    itemId: string,
+    options?: { openCreateCourse?: boolean },
+  ) => {
+    setOpenCreateCourse(Boolean(options?.openCreateCourse));
     setActive(itemId);
     setIsSidebarOpen(false);
     if (itemId === 'dashboard' || itemId === 'my-courses') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
+
+  const handleHeaderSearchChange = (value: string) => {
+    setSearchTerm(value);
+
+    if (!value.trim()) return;
+    if (active !== 'dashboard') return;
+
+    if (platformRole === 'estudiante') {
+      handleNavClick('explore');
+      return;
+    }
+    if (platformRole === 'instructor' || platformRole === 'admin') {
+      handleNavClick('my-courses');
+    }
+  };
+
+  const searchPlaceholder =
+    platformRole === 'estudiante'
+      ? 'Buscar en catálogo o mis cursos…'
+      : 'Buscar cursos…';
 
   const renderMainContent = () => {
     if (active === 'categories') return <CategoriesPage />;
@@ -332,79 +323,59 @@ export const HomePage = () => {
       return (
         <ExploreCoursesPage
           mode={platformRole === 'estudiante' ? 'enroll' : 'browse'}
+          searchTerm={searchTerm}
+          onSearchTermChange={setSearchTerm}
         />
       );
     }
     if (active === 'users') return <UsersPage />;
     if (active === 'reports') return <ReportsPage />;
     if (active === 'my-courses') {
-      if (platformRole === 'estudiante') return <MyEnrollmentsPage />;
-      if (platformRole === 'instructor') return <ManageCoursesPage variant="instructor" />;
-      if (platformRole === 'admin') return <ManageCoursesPage variant="admin" />;
+      if (platformRole === 'estudiante') {
+        return (
+          <MyEnrollmentsPage
+            searchTerm={searchTerm}
+            onSearchTermChange={setSearchTerm}
+          />
+        );
+      }
+      if (platformRole === 'instructor') {
+        return (
+          <ManageCoursesPage
+            variant="instructor"
+            initialOpenCreate={openCreateCourse}
+            searchTerm={searchTerm}
+            onSearchTermChange={setSearchTerm}
+          />
+        );
+      }
+      if (platformRole === 'admin') {
+        return (
+          <ManageCoursesPage
+            variant="admin"
+            initialOpenCreate={openCreateCourse}
+            searchTerm={searchTerm}
+            onSearchTermChange={setSearchTerm}
+          />
+        );
+      }
     }
 
-    const statLabel =
-      platformRole === 'estudiante'
-        ? 'Mis inscripciones'
-        : platformRole === 'instructor'
-          ? 'Mis cursos'
-          : 'Cursos en la plataforma';
+    if (platformRole === 'estudiante') {
+      return <StudentDashboard onNavigate={handleNavClick} />;
+    }
+    if (platformRole === 'instructor') {
+      return <InstructorDashboard onNavigate={handleNavClick} />;
+    }
+    if (platformRole === 'admin') {
+      return <AdminDashboard onNavigate={handleNavClick} />;
+    }
 
     return (
-      <>
-        <section className="greeting">
-          <h1>¡Hola, {user?.nombre || 'Usuario'}!</h1>
-          <p className="greeting-sub">
-            {areaLabel} · Resumen de tu actividad en VITA.
-          </p>
-        </section>
-
-        <section className="stats-row">
-          <div className="stat-card">
-            <div className="stat-icon">
-              <Icon name="book" size={18} />
-            </div>
-            <div className="stat-content">
-              <div className="stat-meta">{statLabel}</div>
-              <div className="stat-value">{dashboardLoading ? '…' : dashboardCount}</div>
-            </div>
-          </div>
-        </section>
-
-        <section id="continuar-aprendiendo" className="continue-section">
-          <div className="section-heading">
-            <h3>Accesos rápidos</h3>
-          </div>
-          <div className="quick-actions">
-            {platformRole === 'estudiante' && (
-              <>
-                <button type="button" className="continue-btn" onClick={() => handleNavClick('explore')}>
-                  Explorar cursos
-                </button>
-                <button type="button" className="continue-btn" onClick={() => handleNavClick('my-courses')}>
-                  Ver mis cursos
-                </button>
-              </>
-            )}
-            {(platformRole === 'instructor' || platformRole === 'admin') && (
-              <button type="button" className="continue-btn" onClick={() => handleNavClick('my-courses')}>
-                Gestionar cursos
-              </button>
-            )}
-            {platformRole === 'admin' && (
-              <button type="button" className="continue-btn" onClick={() => handleNavClick('reports')}>
-                Ver reportes
-              </button>
-            )}
-          </div>
-          {!coursePermissions.viewCourse && (
-            <div className="no-courses" role="alert">
-              <strong>Acceso no permitido</strong>
-              <span>No tienes permisos para realizar esta acción.</span>
-            </div>
-          )}
-        </section>
-      </>
+      <section className="greeting">
+        <h1>¡Hola, {user?.nombre || 'Usuario'}!</h1>
+        <p className="greeting-sub">{areaLabel}</p>
+      </section>
     );
   };
 
@@ -461,7 +432,7 @@ export const HomePage = () => {
       </aside>
 
       <div className="main-area">
-        <header className="dashboard-header relative flex h-17.5 items-center justify-between gap-3 px-4 sm:px-8">
+        <header className="dashboard-header">
           <button
             type="button"
             className="sidebar-toggle"
@@ -473,24 +444,24 @@ export const HomePage = () => {
             <Icon name="menu" size={20} />
           </button>
 
-          <div className="header-search grow max-w-xl">
+          <div className="header-search">
             <input
-              type="text"
-              placeholder="Buscar cursos..."
+              type="search"
+              placeholder={searchPlaceholder}
               aria-label="Buscar cursos"
               value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              className="w-full rounded-lg border border-cyan-400/20 bg-[#0B1220] py-2 pl-3 pr-3 text-sm text-slate-200 outline-none placeholder:text-slate-500 focus:border-cyan-400/50"
+              onChange={(event) => handleHeaderSearchChange(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter' || !searchTerm.trim()) return;
+                if (platformRole === 'estudiante') handleNavClick('explore');
+                else handleNavClick('my-courses');
+              }}
             />
           </div>
 
-          <div className="flex items-center gap-3 ml-auto">
-            <button
-              type="button"
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-800 hover:text-cyan-400"
-              aria-label="Notificaciones"
-            >
-              <Icon name="bell" size={17} />
+          <div className="header-actions">
+            <button type="button" className="header-icon-btn" aria-label="Notificaciones">
+              <Icon name="bell" size={18} />
             </button>
 
             <div ref={userMenuRef} className="user-menu">
@@ -502,12 +473,10 @@ export const HomePage = () => {
                 aria-haspopup="true"
                 aria-controls="user-menu-dropdown"
               >
-                <div className="user-menu-name-desktop text-sm font-medium text-slate-200">
-                  {displayName}
-                </div>
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-500/20 font-semibold text-cyan-400">
+                <span className="user-menu-name-desktop">{displayName}</span>
+                <span className="user-menu-avatar" aria-hidden="true">
                   {displayName.charAt(0).toUpperCase()}
-                </div>
+                </span>
               </button>
 
               {isUserMenuOpen && (
