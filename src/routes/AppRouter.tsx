@@ -6,6 +6,7 @@ import { HomePage } from '../pages/HomePage';
 import { ForbiddenPage } from '../pages/ForbiddenPage';
 import { RoleGuard } from '../components/auth/RoleGuard';
 import { RoleHomeRedirect } from '../components/auth/RoleHomeRedirect';
+import { GuestGuard } from '../components/auth/GuestGuard';
 import { roleRouteAccess } from '../utils/roleNavigation';
 
 export const AppRouter = () => {
@@ -27,10 +28,24 @@ export const AppRouter = () => {
                     />
                 ))}
 
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
+                <Route
+                    path="/login"
+                    element={
+                        <GuestGuard>
+                            <LoginPage />
+                        </GuestGuard>
+                    }
+                />
+                <Route
+                    path="/register"
+                    element={
+                        <GuestGuard>
+                            <RegisterPage />
+                        </GuestGuard>
+                    }
+                />
                 <Route path="/403" element={<ForbiddenPage />} />
-                <Route path="*" element={<Navigate to="/" />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </BrowserRouter>
     );

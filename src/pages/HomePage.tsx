@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import BrandLogo from '../components/BrandLogo';
+import { UserNavCluster } from '../components/UserNavCluster';
 import { PerfilPage } from './PerfilPage';
 import { CategoriesPage } from './admin/CategoriesPage';
 import { ExploreCoursesPage } from './domain/ExploreCoursesPage';
@@ -14,7 +15,6 @@ import { InstructorDashboard } from './dashboard/InstructorDashboard';
 import { AdminDashboard } from './dashboard/AdminDashboard';
 import { getMeApi, logoutApi } from '../api/authApi';
 import { normalizePlatformRole } from '../utils/coursePermissions';
-import { getProfilePhotoUrl } from '../utils/profilePhoto';
 import { getRoleAreaLabel, getRoleNavItems } from '../utils/roleNavigation';
 import './HomePage.css';
 
@@ -226,31 +226,20 @@ const Icon = ({ name, size = 18 }: IconProps) => {
 };
 
 export const HomePage = () => {
-  const { user, logout, isAuthenticated, photoVersion, updateUser } = useAuth();
+  const { user, logout, isAuthenticated, updateUser } = useAuth();
   const navigate = useNavigate();
   const platformRole = normalizePlatformRole(user?.rol);
 
   const [active, setActive] = useState('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [openCreateCourse, setOpenCreateCourse] = useState(false);
-  const userMenuRef = useRef<HTMLDivElement>(null);
-
-  const userWithLastName = user as (typeof user & { apellido?: string }) | null;
-  const displayName = [user?.nombre?.trim(), userWithLastName?.apellido?.trim()]
-    .filter(Boolean)
-    .join(' ') || 'Usuario';
-  const displayEmail = user?.email?.trim() || 'Correo no disponible';
-  const displayRole = user?.rol?.trim() || 'No especificado';
-  const profilePhotoUrl = getProfilePhotoUrl(user?.fotoUrl, photoVersion);
-  const avatarInitial = displayName.charAt(0).toUpperCase();
   const navItems = getRoleNavItems(user?.rol);
   const areaLabel = getRoleAreaLabel(user?.rol);
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/login');
+      navigate('/login', { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
@@ -273,26 +262,14 @@ export const HomePage = () => {
   }, [isAuthenticated, updateUser]);
 
   useEffect(() => {
-    const closeUserMenu = (event: MouseEvent) => {
-      if (!userMenuRef.current?.contains(event.target as Node)) {
-        setIsUserMenuOpen(false);
-      }
-    };
-
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setIsUserMenuOpen(false);
         setIsSidebarOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', closeUserMenu);
     document.addEventListener('keydown', closeOnEscape);
-
-    return () => {
-      document.removeEventListener('mousedown', closeUserMenu);
-      document.removeEventListener('keydown', closeOnEscape);
-    };
+    return () => document.removeEventListener('keydown', closeOnEscape);
   }, []);
 
   const handleLogout = async () => {
@@ -302,7 +279,7 @@ export const HomePage = () => {
       // Logout stateless: limpiar sesión local aunque falle la red.
     }
     logout();
-    navigate('/login');
+    navigate('/login', { replace: true });
   };
 
   const handleNavClick = (
@@ -480,46 +457,7 @@ export const HomePage = () => {
             />
           </div>
 
-          <div className="header-actions">
-            <button type="button" className="header-icon-btn" aria-label="Notificaciones">
-              <Icon name="bell" size={18} />
-            </button>
-
-            <div ref={userMenuRef} className="user-menu">
-              <button
-                type="button"
-                className="user-menu-trigger"
-                onClick={() => setIsUserMenuOpen((isOpen) => !isOpen)}
-                aria-expanded={isUserMenuOpen}
-                aria-haspopup="true"
-                aria-controls="user-menu-dropdown"
-              >
-                <span className="user-menu-name-desktop">{displayName}</span>
-                <span className="user-menu-avatar" aria-hidden="true">
-                  {profilePhotoUrl ? (
-                    <img className="user-menu-avatar-image" src={profilePhotoUrl} alt="" />
-                  ) : (
-                    avatarInitial
-                  )}
-                </span>
-              </button>
-
-              {isUserMenuOpen && (
-                <div
-                  id="user-menu-dropdown"
-                  className="user-menu-dropdown"
-                  role="region"
-                  aria-label="Información del usuario"
-                >
-                  <p className="user-menu-name">{displayName}</p>
-                  <p className="user-menu-email">{displayEmail}</p>
-                  <div className="user-menu-divider" />
-                  <p className="user-menu-role-label">Rol</p>
-                  <span className="user-menu-role">{displayRole}</span>
-                </div>
-              )}
-            </div>
-          </div>
+          <UserNavCluster />
         </header>
 
         <main className="content">{renderMainContent()}</main>

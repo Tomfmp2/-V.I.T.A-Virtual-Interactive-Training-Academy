@@ -43,7 +43,7 @@ export const LandingPage = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate(getRoleHomePath(user?.rol) ?? '/estudiante');
+      navigate(getRoleHomePath(user?.rol) ?? '/estudiante', { replace: true });
     }
   }, [isAuthenticated, navigate, user?.rol]);
 

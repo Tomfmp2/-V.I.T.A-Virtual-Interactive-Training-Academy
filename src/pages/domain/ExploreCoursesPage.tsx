@@ -157,11 +157,19 @@ export const ExploreCoursesPage = ({
             <article key={course.id} className="domain-card">
               <span className="domain-badge domain-badge-category">{course.categoriaNombre}</span>
               <h2 className="domain-card-title">{course.titulo}</h2>
-              <p className="domain-card-meta">
+              <p className="domain-card-desc">
                 {course.descripcionCorta || 'Sin descripción corta.'}
               </p>
-              <p className="domain-card-meta">Instructor: {course.instructorNombre}</p>
-              <p className="domain-card-meta">Nivel: {course.nivelNombre}</p>
+              <dl className="domain-card-facts">
+                <div>
+                  <dt>Instructor</dt>
+                  <dd>{course.instructorNombre}</dd>
+                </div>
+                <div>
+                  <dt>Nivel</dt>
+                  <dd>{course.nivelNombre}</dd>
+                </div>
+              </dl>
 
               <div className="domain-card-actions">
                 <button

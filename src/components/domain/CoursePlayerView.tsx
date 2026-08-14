@@ -199,7 +199,6 @@ export const CoursePlayerView = ({
         <button type="button" className="course-player-back" onClick={onBack}>
           ← {backLabel}
         </button>
-        <p className="course-player-brand">VITA Learning Hub</p>
       </header>
 
       {isLoading ? (

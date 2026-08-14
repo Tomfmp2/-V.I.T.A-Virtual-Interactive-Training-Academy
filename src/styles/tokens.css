@@ -1,6 +1,9 @@
 :root {
-  --color-brand-500: #10b981;
-  --color-brand-600: #00e676;
+  /* Verdes del logo VITA — únicos acentos verdes de la app */
+  --color-brand-lime: #00E676;
+  --color-brand-emerald: #10B981;
+  --color-brand-500: #10B981;
+  --color-brand-600: #00E676;
   --color-brand-100: rgba(0, 230, 118, 0.1);
 
   --color-surface-950: #0f172a;
@@ -23,7 +26,7 @@
   --radius-card: 16px;
   --radius-input: 10px;
 
-  --primary: #00e676;
+  --primary: #00E676;
   --primary-light: rgba(0, 230, 118, 0.1);
   --secondary: #38bdf8;
   --secondary-light: rgba(56, 189, 248, 0.1);

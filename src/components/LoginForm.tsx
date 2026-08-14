@@ -86,7 +86,7 @@ export const LoginForm = () => {
       const { token, usuario } = loginResponse;
       login(token, usuario);
       setFormStatus({ type: 'success', message: 'Inicio de sesión exitoso.' });
-      navigate(getRoleHomePath(usuario.rol) ?? '/403');
+      navigate(getRoleHomePath(usuario.rol) ?? '/403', { replace: true });
     } catch (error: unknown) {
       const nextFormErrors: typeof errors = {};
 

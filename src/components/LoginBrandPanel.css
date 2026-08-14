@@ -51,6 +51,9 @@
 .login-brand-mark {
   display: inline-flex;
   max-width: min(220px, 100%);
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
 }
 
 .login-brand-mark .brand-logo-svg {

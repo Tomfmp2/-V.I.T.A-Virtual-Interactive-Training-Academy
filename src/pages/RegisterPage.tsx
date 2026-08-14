@@ -103,12 +103,12 @@ export const RegisterPage = () => {
         const loginResponse = await loginApi({ email, password });
         const { token, usuario } = loginResponse;
         login(token, usuario);
-        setTimeout(() => navigate(getRoleHomePath(usuario.rol) ?? '/403'), 700);
+        setTimeout(() => navigate(getRoleHomePath(usuario.rol) ?? '/403', { replace: true }), 700);
       } catch (loginErr) {
         // Si el login automático falla, redirigir a /login mostrando mensaje
         console.error('Auto login falló tras registro:', loginErr);
         setFormStatus({ type: 'success', message: 'Cuenta creada correctamente.' });
-        setTimeout(() => navigate('/login'), 900);
+        setTimeout(() => navigate('/login', { replace: true }), 900);
       }
     } catch (err: unknown) {
       const nextErrors: typeof errors = {};

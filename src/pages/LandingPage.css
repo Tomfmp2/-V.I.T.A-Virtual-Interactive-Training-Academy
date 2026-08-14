@@ -943,7 +943,7 @@
 .landing-hero-panel-label {
   display: inline-block;
   margin-bottom: 0.55rem;
-  color: #86efac;
+  color: #00E676;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -1079,7 +1079,7 @@
 
 .landing-footer-link:hover {
   border-color: rgba(0, 230, 118, 0.45);
-  color: #86efac;
+  color: #00E676;
 }
 
 @keyframes landingFadeUp {

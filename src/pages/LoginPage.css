@@ -3,7 +3,7 @@
   --panel-left: #08101D;
   --panel-right: #111E33;
   --border-cyan: #22D3EE;
-  --green: #4ADE80;
+  --green: #00E676;
   --green-dark: #04210E;
   --text-light: #E2E8F0;
   --text-muted: #94A3B8;
@@ -383,7 +383,7 @@ button {
 }
 
 .submit-button:hover {
-  background: #4ADE80;
+  background: #10B981;
 }
 
 .submit-button:disabled {
@@ -429,7 +429,7 @@ button {
   height: 9px;
   border-radius: 999px;
   background: var(--green);
-  box-shadow: 0 0 14px rgba(74, 222, 128, 0.35);
+  box-shadow: 0 0 14px rgba(0, 230, 118, 0.35);
 }
 
 .brand-heading {

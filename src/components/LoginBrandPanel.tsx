@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { BrandLogo } from './BrandLogo';
 import './LoginBrandPanel.css';
 
@@ -15,9 +16,9 @@ export const LoginBrandPanel = ({ mode = 'login' }: LoginBrandPanelProps) => {
 
       <div className="login-left-content">
         <div className="login-left-top">
-          <div className="login-brand-mark">
+          <Link to="/" className="login-brand-mark" aria-label="Ir a la página de inicio de VITA">
             <BrandLogo />
-          </div>
+          </Link>
           <p className="login-left-kicker">Virtual Interactive Training Academy</p>
         </div>
 
