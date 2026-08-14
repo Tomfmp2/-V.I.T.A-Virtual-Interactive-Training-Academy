@@ -52,12 +52,12 @@ export const LessonForm = ({
 
         <label className="domain-field">
           <span>
-            Recurso <small>(URL https://…)</small>
+            Recurso <small>(video, imagen o YouTube/Vimeo)</small>
           </span>
           <input
-            type="text"
+            type="url"
             inputMode="url"
-            placeholder="https://ejemplo.com/recurso"
+            placeholder="https://…/video.mp4 · imagen.jpg · youtube.com/…"
             value={value.recurso ?? ''}
             onChange={(event) => onChange({ ...value, recurso: event.target.value })}
           />

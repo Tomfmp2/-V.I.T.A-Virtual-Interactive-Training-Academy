@@ -18,9 +18,108 @@ export type CoursePlayerViewProps = {
   onBack: () => void;
 };
 
-const isProbablyVideoUrl = (url: string): boolean =>
-  /\.(mp4|webm|ogg)(\?|$)/i.test(url) ||
-  /youtube\.com|youtu\.be|vimeo\.com/i.test(url);
+type ResourceKind = 'youtube' | 'vimeo' | 'video-file' | 'image' | 'link';
+
+const IMAGE_EXT = /\.(avif|bmp|gif|jpe?g|png|svg|webp)(\?|#|$)/i;
+const VIDEO_EXT = /\.(mp4|webm|ogg|ogv|mov)(\?|#|$)/i;
+
+const classifyResource = (rawUrl: string): { kind: ResourceKind; embedUrl: string } => {
+  const url = rawUrl.trim();
+
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^www\./i, '').toLowerCase();
+
+    if (host === 'youtu.be') {
+      const id = parsed.pathname.split('/').filter(Boolean)[0];
+      if (id) {
+        return {
+          kind: 'youtube',
+          embedUrl: `https://www.youtube.com/embed/${id}`,
+        };
+      }
+    }
+
+    if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'youtube-nocookie.com') {
+      const fromQuery = parsed.searchParams.get('v');
+      const parts = parsed.pathname.split('/').filter(Boolean);
+      const fromPath =
+        parts[0] === 'embed' || parts[0] === 'shorts' || parts[0] === 'live'
+          ? parts[1]
+          : undefined;
+      const id = fromQuery || fromPath;
+      if (id) {
+        return {
+          kind: 'youtube',
+          embedUrl: `https://www.youtube.com/embed/${id}`,
+        };
+      }
+    }
+
+    if (host === 'vimeo.com' || host.endsWith('.vimeo.com')) {
+      const id = parsed.pathname.split('/').filter(Boolean).find((part) => /^\d+$/.test(part));
+      if (id) {
+        return {
+          kind: 'vimeo',
+          embedUrl: `https://player.vimeo.com/video/${id}`,
+        };
+      }
+    }
+  } catch {
+    // URL relativa o inválida: se clasifica por extensión
+  }
+
+  if (IMAGE_EXT.test(url)) return { kind: 'image', embedUrl: url };
+  if (VIDEO_EXT.test(url)) return { kind: 'video-file', embedUrl: url };
+  return { kind: 'link', embedUrl: url };
+};
+
+const LessonResourceMedia = ({ url, title }: { url: string; title: string }) => {
+  const { kind, embedUrl } = classifyResource(url);
+
+  if (kind === 'youtube' || kind === 'vimeo') {
+    return (
+      <div className="course-player-embed">
+        <iframe
+          src={embedUrl}
+          title={`Recurso: ${title}`}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          loading="lazy"
+          referrerPolicy="strict-origin-when-cross-origin"
+        />
+      </div>
+    );
+  }
+
+  if (kind === 'video-file') {
+    return (
+      <video controls playsInline preload="metadata" src={embedUrl}>
+        Tu navegador no soporta video embebido.
+      </video>
+    );
+  }
+
+  if (kind === 'image') {
+    return (
+      <img
+        className="course-player-image"
+        src={embedUrl}
+        alt={`Recurso de la lección: ${title}`}
+        loading="lazy"
+      />
+    );
+  }
+
+  return (
+    <div className="course-player-resource-card">
+      <p>No se pudo previsualizar este recurso. Ábrelo en una pestaña nueva.</p>
+      <a href={embedUrl} target="_blank" rel="noreferrer" className="course-player-resource-link">
+        Abrir recurso →
+      </a>
+    </div>
+  );
+};
 
 export const CoursePlayerView = ({
   courseId,
@@ -193,24 +292,10 @@ export const CoursePlayerView = ({
 
                 <div className="course-player-media">
                   {selectedLesson.recurso ? (
-                    isProbablyVideoUrl(selectedLesson.recurso) &&
-                    /\.(mp4|webm|ogg)(\?|$)/i.test(selectedLesson.recurso) ? (
-                      <video controls src={selectedLesson.recurso}>
-                        Tu navegador no soporta video embebido.
-                      </video>
-                    ) : (
-                      <div className="course-player-resource-card">
-                        <p>Recurso de la lección</p>
-                        <a
-                          href={selectedLesson.recurso}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="course-player-resource-link"
-                        >
-                          Abrir recurso →
-                        </a>
-                      </div>
-                    )
+                    <LessonResourceMedia
+                      url={selectedLesson.recurso}
+                      title={selectedLesson.titulo}
+                    />
                   ) : (
                     <div className="course-player-resource-card is-muted">
                       <p>Esta lección aún no tiene recurso multimedia.</p>
@@ -218,13 +303,16 @@ export const CoursePlayerView = ({
                   )}
                 </div>
 
-                {selectedLesson.descripcion ? (
-                  <p className="course-player-description">{selectedLesson.descripcion}</p>
-                ) : (
-                  <p className="course-player-description is-muted">
-                    Sin descripción adicional para esta lección.
-                  </p>
-                )}
+                <div className="course-player-description-block">
+                  <h3 className="course-player-description-label">Descripción</h3>
+                  {selectedLesson.descripcion ? (
+                    <p className="course-player-description">{selectedLesson.descripcion}</p>
+                  ) : (
+                    <p className="course-player-description is-muted">
+                      Sin descripción adicional para esta lección.
+                    </p>
+                  )}
+                </div>
 
                 <div className="course-player-cta-wrap">
                   <button
