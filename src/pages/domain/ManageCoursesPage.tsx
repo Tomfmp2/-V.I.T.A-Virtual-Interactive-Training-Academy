@@ -49,6 +49,9 @@ type CourseFormState = {
   idCategoria: string;
   idNivel: string;
   idInstructor: string;
+  primeraLeccionTitulo: string;
+  primeraLeccionDescripcion: string;
+  primeraLeccionRecurso: string;
 };
 
 const emptyCourseForm: CourseFormState = {
@@ -57,6 +60,9 @@ const emptyCourseForm: CourseFormState = {
   idCategoria: '',
   idNivel: '',
   idInstructor: '',
+  primeraLeccionTitulo: '',
+  primeraLeccionDescripcion: '',
+  primeraLeccionRecurso: '',
 };
 
 const emptyLessonForm: LessonRequest = {
@@ -245,6 +251,9 @@ export const ManageCoursesPage = ({
       idCategoria: category ? String(category.id) : '',
       idNivel: level ? String(level.id) : '',
       idInstructor: '',
+      primeraLeccionTitulo: '',
+      primeraLeccionDescripcion: '',
+      primeraLeccionRecurso: '',
     });
     setIsCourseFormOpen(true);
     setCourseSaveError('');
@@ -253,8 +262,21 @@ export const ManageCoursesPage = ({
 
   const handleCourseSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setIsSavingCourse(true);
     setCourseSaveError('');
+
+    if (editingCourseId == null) {
+      if (isAdminVariant && !courseForm.idInstructor.trim()) {
+        setCourseSaveError('Debes asignar un instructor al curso.');
+        return;
+      }
+
+      if (!courseForm.primeraLeccionTitulo.trim()) {
+        setCourseSaveError('Debes añadir al menos una lección al crear el curso.');
+        return;
+      }
+    }
+
+    setIsSavingCourse(true);
 
     const payload: CourseCreateRequest | CourseUpdateRequest = {
       titulo: courseForm.titulo.trim(),
@@ -272,11 +294,25 @@ export const ManageCoursesPage = ({
           ...payload,
           idInstructor: courseForm.idInstructor.trim(),
         };
-        await createCourseApi(adminPayload);
-        setFeedback(`Curso "${payload.titulo}" creado en borrador.`);
+        const created = await createCourseApi(adminPayload);
+        await createLessonApi(created.id, {
+          titulo: courseForm.primeraLeccionTitulo.trim(),
+          descripcion: courseForm.primeraLeccionDescripcion.trim() || null,
+          recurso: courseForm.primeraLeccionRecurso.trim() || null,
+          orden: 1,
+        });
+        setFeedback(`Curso "${payload.titulo}" creado con su primera lección.`);
+        setSelectedCourseId(created.id);
       } else {
-        await createCourseApi(payload);
-        setFeedback(`Curso "${payload.titulo}" creado en borrador.`);
+        const created = await createCourseApi(payload);
+        await createLessonApi(created.id, {
+          titulo: courseForm.primeraLeccionTitulo.trim(),
+          descripcion: courseForm.primeraLeccionDescripcion.trim() || null,
+          recurso: courseForm.primeraLeccionRecurso.trim() || null,
+          orden: 1,
+        });
+        setFeedback(`Curso "${payload.titulo}" creado con su primera lección.`);
+        setSelectedCourseId(created.id);
       }
 
       setCourseForm(emptyCourseForm);
@@ -301,8 +337,32 @@ export const ManageCoursesPage = ({
     const currentStatus = normalizeCourseStatus(course.estado);
     const nextStatus = currentStatus === 'publicado' ? 'borrador' : 'publicado';
 
+    if (nextStatus === 'publicado') {
+      let lessonCount =
+        selectedCourseId === course.id ? lessons.length : null;
+
+      if (lessonCount === null) {
+        try {
+          const courseLessons = await getLessonsApi(course.id);
+          lessonCount = courseLessons.length;
+        } catch {
+          setLoadError('No se pudo verificar las lecciones del curso.');
+          return;
+        }
+      }
+
+      if (lessonCount === 0) {
+        setLoadError('El curso debe tener al menos una lección antes de publicarse.');
+        if (selectedCourseId !== course.id) {
+          setSelectedCourseId(course.id);
+        }
+        return;
+      }
+    }
+
     setStatusUpdatingId(course.id);
     setFeedback('');
+    setLoadError('');
 
     try {
       await changeCourseStatusApi(course.id, { estado: nextStatus });
@@ -426,8 +486,13 @@ export const ManageCoursesPage = ({
 
   const pageTitle = isAdminVariant ? 'Cursos' : 'Mis cursos';
   const pageDescription = isAdminVariant
-    ? 'Selecciona un curso para editar lecciones y estado.'
-    : 'Selecciona un curso, gestiona lecciones y publícalo cuando esté listo.';
+    ? 'Crea cursos asignando un instructor y al menos una lección.'
+    : 'Crea cursos con al menos una lección y publícalos cuando estén listos.';
+  const isCreatingCourse = editingCourseId == null;
+  const canPublishSelected =
+    selectedCourse != null &&
+    normalizeCourseStatus(selectedCourse.estado) !== 'publicado' &&
+    lessons.length > 0;
 
   return (
     <section className="manage-page" aria-labelledby="manage-courses-title">
@@ -460,96 +525,172 @@ export const ManageCoursesPage = ({
 
       {isCourseFormOpen && (
         <div className="manage-form-wrap">
-          <form className="domain-form" onSubmit={(event) => void handleCourseSubmit(event)}>
-            <h2>{editingCourseId != null ? 'Editar curso' : 'Nuevo curso'}</h2>
+          <form
+            className="domain-form manage-course-form"
+            onSubmit={(event) => void handleCourseSubmit(event)}
+          >
+            <header className="manage-form-head">
+              <h2>{editingCourseId != null ? 'Editar curso' : 'Nuevo curso'}</h2>
+              <p>
+                {isCreatingCourse
+                  ? 'Completa los datos del curso y añade la primera lección.'
+                  : 'Actualiza la información general del curso.'}
+              </p>
+            </header>
 
-            <label className="domain-field">
-              <span>Título</span>
-              <input
-                type="text"
-                required
-                minLength={5}
-                value={courseForm.titulo}
-                onChange={(event) =>
-                  setCourseForm((current) => ({ ...current, titulo: event.target.value }))
-                }
-              />
-            </label>
+            <section className="manage-form-section" aria-labelledby="manage-course-data-title">
+              <h3 id="manage-course-data-title">Datos del curso</h3>
 
-            <label className="domain-field">
-              <span>Descripción corta</span>
-              <textarea
-                rows={2}
-                value={courseForm.descripcionCorta}
-                onChange={(event) =>
-                  setCourseForm((current) => ({
-                    ...current,
-                    descripcionCorta: event.target.value,
-                  }))
-                }
-              />
-            </label>
-
-            <div className="domain-form-grid">
               <label className="domain-field">
-                <span>Categoría</span>
-                <select
+                <span>Título</span>
+                <input
+                  type="text"
                   required
-                  value={courseForm.idCategoria}
+                  minLength={5}
+                  value={courseForm.titulo}
                   onChange={(event) =>
-                    setCourseForm((current) => ({ ...current, idCategoria: event.target.value }))
+                    setCourseForm((current) => ({ ...current, titulo: event.target.value }))
                   }
-                >
-                  <option value="">Selecciona</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.nombre}
-                    </option>
-                  ))}
-                </select>
+                />
               </label>
 
               <label className="domain-field">
-                <span>Nivel</span>
-                <select
-                  required
-                  value={courseForm.idNivel}
+                <span>Descripción corta</span>
+                <textarea
+                  rows={2}
+                  value={courseForm.descripcionCorta}
                   onChange={(event) =>
-                    setCourseForm((current) => ({ ...current, idNivel: event.target.value }))
+                    setCourseForm((current) => ({
+                      ...current,
+                      descripcionCorta: event.target.value,
+                    }))
                   }
-                >
-                  <option value="">Selecciona</option>
-                  {levels.map((level) => (
-                    <option key={level.id} value={level.id}>
-                      {level.nombre}
-                    </option>
-                  ))}
-                </select>
+                />
               </label>
-            </div>
 
-            {isAdminVariant && editingCourseId == null && (
-              <label className="domain-field">
-                <span>Instructor</span>
-                <select
-                  required
-                  value={courseForm.idInstructor}
-                  onChange={(event) =>
-                    setCourseForm((current) => ({ ...current, idInstructor: event.target.value }))
-                  }
-                >
-                  <option value="">Selecciona un instructor</option>
-                  {instructors.map((instructor) => (
-                    <option key={instructor.id} value={instructor.id}>
-                      {instructor.nombre} {instructor.apellido}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <div className="domain-form-grid">
+                <label className="domain-field">
+                  <span>Categoría</span>
+                  <select
+                    required
+                    value={courseForm.idCategoria}
+                    onChange={(event) =>
+                      setCourseForm((current) => ({ ...current, idCategoria: event.target.value }))
+                    }
+                  >
+                    <option value="">Selecciona</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="domain-field">
+                  <span>Nivel</span>
+                  <select
+                    required
+                    value={courseForm.idNivel}
+                    onChange={(event) =>
+                      setCourseForm((current) => ({ ...current, idNivel: event.target.value }))
+                    }
+                  >
+                    <option value="">Selecciona</option>
+                    {levels.map((level) => (
+                      <option key={level.id} value={level.id}>
+                        {level.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              {isAdminVariant && isCreatingCourse && (
+                <label className="domain-field">
+                  <span>Instructor asignado</span>
+                  <select
+                    required
+                    value={courseForm.idInstructor}
+                    onChange={(event) =>
+                      setCourseForm((current) => ({ ...current, idInstructor: event.target.value }))
+                    }
+                  >
+                    <option value="">Selecciona un instructor</option>
+                    {instructors.map((instructor) => (
+                      <option key={instructor.id} value={instructor.id}>
+                        {instructor.nombre} {instructor.apellido}
+                      </option>
+                    ))}
+                  </select>
+                  {instructors.length === 0 && (
+                    <p className="domain-inline-error" role="alert">
+                      No hay instructores disponibles. Crea uno en Usuarios antes de crear cursos.
+                    </p>
+                  )}
+                </label>
+              )}
+            </section>
+
+            {isCreatingCourse && (
+              <section
+                className="manage-form-section manage-form-section-lesson"
+                aria-labelledby="manage-first-lesson-title"
+              >
+                <h3 id="manage-first-lesson-title">Primera lección</h3>
+                <p className="manage-form-section-desc">
+                  Todo curso debe crearse con al menos una lección.
+                </p>
+
+                <label className="domain-field">
+                  <span>Título de la lección</span>
+                  <input
+                    type="text"
+                    required
+                    minLength={3}
+                    value={courseForm.primeraLeccionTitulo}
+                    onChange={(event) =>
+                      setCourseForm((current) => ({
+                        ...current,
+                        primeraLeccionTitulo: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+
+                <label className="domain-field">
+                  <span>Descripción</span>
+                  <textarea
+                    rows={2}
+                    value={courseForm.primeraLeccionDescripcion}
+                    onChange={(event) =>
+                      setCourseForm((current) => ({
+                        ...current,
+                        primeraLeccionDescripcion: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+
+                <label className="domain-field">
+                  <span>Recurso</span>
+                  <input
+                    type="url"
+                    placeholder="https://… (video, imagen o enlace)"
+                    value={courseForm.primeraLeccionRecurso}
+                    onChange={(event) =>
+                      setCourseForm((current) => ({
+                        ...current,
+                        primeraLeccionRecurso: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+              </section>
             )}
 
             {courseSaveError && (
-              <p className="domain-inline-error" role="alert">
+              <p className="domain-inline-error manage-form-error" role="alert">
                 {courseSaveError}
               </p>
             )}
@@ -571,7 +712,10 @@ export const ManageCoursesPage = ({
                 className="domain-btn-primary"
                 disabled={
                   isSavingCourse ||
-                  (isAdminVariant && editingCourseId == null && !courseForm.idInstructor.trim())
+                  (isAdminVariant &&
+                    isCreatingCourse &&
+                    (!courseForm.idInstructor.trim() || instructors.length === 0)) ||
+                  (isCreatingCourse && !courseForm.primeraLeccionTitulo.trim())
                 }
               >
                 {isSavingCourse
@@ -695,7 +839,17 @@ export const ManageCoursesPage = ({
                   <button
                     type="button"
                     className="domain-btn-ghost"
-                    disabled={statusUpdatingId === selectedCourse.id}
+                    disabled={
+                      statusUpdatingId === selectedCourse.id ||
+                      (normalizeCourseStatus(selectedCourse.estado) !== 'publicado' &&
+                        !canPublishSelected)
+                    }
+                    title={
+                      !canPublishSelected &&
+                      normalizeCourseStatus(selectedCourse.estado) !== 'publicado'
+                        ? 'Añade al menos una lección para publicar'
+                        : undefined
+                    }
                     onClick={() => void handleToggleStatus(selectedCourse)}
                   >
                     {statusUpdatingId === selectedCourse.id

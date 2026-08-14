@@ -265,7 +265,6 @@
 }
 
 .domain-card {
-  position: relative;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -276,16 +275,6 @@
   overflow: hidden;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
-.domain-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, #10b981, #00e676);
-}
-
 .domain-card.is-selected {
   border-color: rgba(0, 230, 118, 0.45);
   box-shadow: 0 0 0 1px rgba(0, 230, 118, 0.2);

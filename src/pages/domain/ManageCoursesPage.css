@@ -257,6 +257,105 @@
   background: #111e33;
 }
 
+.manage-course-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 1.35rem 1.5rem 1.25rem;
+}
+
+.manage-course-form .domain-form-actions {
+  margin-top: 1.35rem;
+  padding-top: 1.15rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.manage-form-head {
+  margin-bottom: 0.25rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.manage-form-head h2 {
+  margin: 0 0 0.4rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.manage-form-head p {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.manage-form-section {
+  padding-top: 1.15rem;
+}
+
+.manage-form-section + .manage-form-section {
+  margin-top: 0.35rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.manage-form-section h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #cbd5e1;
+}
+
+.manage-form-section-desc {
+  margin: 0 0 1rem;
+  color: #94a3b8;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.manage-form-section-lesson {
+  padding: 1.15rem 1rem 0.15rem;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 12px;
+  background: rgba(11, 17, 32, 0.65);
+}
+
+.manage-form-section-lesson h3 {
+  text-transform: none;
+  letter-spacing: -0.01em;
+  font-size: 0.98rem;
+  color: #e2e8f0;
+}
+
+.manage-course-form .domain-field {
+  margin-bottom: 14px;
+}
+
+.manage-course-form .domain-field:last-child {
+  margin-bottom: 0;
+}
+
+.manage-course-form .domain-field > span {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.manage-course-form .domain-field input,
+.manage-course-form .domain-field textarea,
+.manage-course-form .domain-field select {
+  min-height: 42px;
+}
+
+.manage-form-error {
+  margin: 1rem 0 0;
+}
+
 .lesson-workspace {
   margin-top: 0.25rem;
 }
