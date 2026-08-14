@@ -396,7 +396,7 @@ export const HomePage = () => {
       </aside>
 
       <div className="main-area">
-        <header className="dashboard-header relative flex h-17.5 items-center justify-between gap-3 px-4 sm:px-8">
+        <header className="dashboard-header">
           <button
             type="button"
             className="sidebar-toggle"
@@ -408,24 +408,19 @@ export const HomePage = () => {
             <Icon name="menu" size={20} />
           </button>
 
-          <div className="header-search grow max-w-xl">
+          <div className="header-search">
             <input
-              type="text"
+              type="search"
               placeholder="Buscar cursos..."
               aria-label="Buscar cursos"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              className="w-full rounded-lg border border-cyan-400/20 bg-[#0B1220] py-2 pl-3 pr-3 text-sm text-slate-200 outline-none placeholder:text-slate-500 focus:border-cyan-400/50"
             />
           </div>
 
-          <div className="flex items-center gap-3 ml-auto">
-            <button
-              type="button"
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-800 hover:text-cyan-400"
-              aria-label="Notificaciones"
-            >
-              <Icon name="bell" size={17} />
+          <div className="header-actions">
+            <button type="button" className="header-icon-btn" aria-label="Notificaciones">
+              <Icon name="bell" size={18} />
             </button>
 
             <div ref={userMenuRef} className="user-menu">
@@ -437,12 +432,10 @@ export const HomePage = () => {
                 aria-haspopup="true"
                 aria-controls="user-menu-dropdown"
               >
-                <div className="user-menu-name-desktop text-sm font-medium text-slate-200">
-                  {displayName}
-                </div>
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-500/20 font-semibold text-cyan-400">
+                <span className="user-menu-name-desktop">{displayName}</span>
+                <span className="user-menu-avatar" aria-hidden="true">
                   {displayName.charAt(0).toUpperCase()}
-                </div>
+                </span>
               </button>
 
               {isUserMenuOpen && (
