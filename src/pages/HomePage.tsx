@@ -9,10 +9,11 @@ import { MyEnrollmentsPage } from './domain/MyEnrollmentsPage';
 import { ManageCoursesPage } from './domain/ManageCoursesPage';
 import { UsersPage } from './domain/UsersPage';
 import { ReportsPage } from './domain/ReportsPage';
+import { StudentDashboard } from './dashboard/StudentDashboard';
+import { InstructorDashboard } from './dashboard/InstructorDashboard';
+import { AdminDashboard } from './dashboard/AdminDashboard';
 import { logoutApi } from '../api/authApi';
-import { getMyEnrollmentsApi } from '../api/enrollmentsApi';
-import { getMyCoursesApi, getCoursesApi } from '../api/coursesApi';
-import { getCoursePermissions, normalizePlatformRole } from '../utils/coursePermissions';
+import { normalizePlatformRole } from '../utils/coursePermissions';
 import { getRoleAreaLabel, getRoleNavItems } from '../utils/roleNavigation';
 import './HomePage.css';
 
@@ -232,8 +233,7 @@ export const HomePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [dashboardCount, setDashboardCount] = useState(0);
-  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [openCreateCourse, setOpenCreateCourse] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const userWithLastName = user as (typeof user & { apellido?: string }) | null;
@@ -242,7 +242,6 @@ export const HomePage = () => {
     .join(' ') || 'Usuario';
   const displayEmail = user?.email?.trim() || 'Correo no disponible';
   const displayRole = user?.rol?.trim() || 'No especificado';
-  const coursePermissions = getCoursePermissions(user?.rol);
   const navItems = getRoleNavItems(user?.rol);
   const areaLabel = getRoleAreaLabel(user?.rol);
 
@@ -275,38 +274,6 @@ export const HomePage = () => {
     };
   }, []);
 
-  useEffect(() => {
-    if (active !== 'dashboard' || !isAuthenticated) return;
-
-    let cancelled = false;
-    const loadStats = async () => {
-      setDashboardLoading(true);
-      try {
-        if (platformRole === 'estudiante') {
-          const list = await getMyEnrollmentsApi();
-          if (!cancelled) setDashboardCount(list.length);
-        } else if (platformRole === 'instructor') {
-          const list = await getMyCoursesApi();
-          if (!cancelled) setDashboardCount(list.length);
-        } else if (platformRole === 'admin') {
-          const list = await getCoursesApi();
-          if (!cancelled) setDashboardCount(list.length);
-        } else if (!cancelled) {
-          setDashboardCount(0);
-        }
-      } catch {
-        if (!cancelled) setDashboardCount(0);
-      } finally {
-        if (!cancelled) setDashboardLoading(false);
-      }
-    };
-
-    void loadStats();
-    return () => {
-      cancelled = true;
-    };
-  }, [active, isAuthenticated, platformRole]);
-
   const handleLogout = async () => {
     try {
       await logoutApi();
@@ -317,7 +284,11 @@ export const HomePage = () => {
     navigate('/login');
   };
 
-  const handleNavClick = (itemId: string) => {
+  const handleNavClick = (
+    itemId: string,
+    options?: { openCreateCourse?: boolean },
+  ) => {
+    setOpenCreateCourse(Boolean(options?.openCreateCourse));
     setActive(itemId);
     setIsSidebarOpen(false);
     if (itemId === 'dashboard' || itemId === 'my-courses') {
@@ -339,72 +310,36 @@ export const HomePage = () => {
     if (active === 'reports') return <ReportsPage />;
     if (active === 'my-courses') {
       if (platformRole === 'estudiante') return <MyEnrollmentsPage />;
-      if (platformRole === 'instructor') return <ManageCoursesPage variant="instructor" />;
-      if (platformRole === 'admin') return <ManageCoursesPage variant="admin" />;
+      if (platformRole === 'instructor') {
+        return (
+          <ManageCoursesPage
+            variant="instructor"
+            initialOpenCreate={openCreateCourse}
+          />
+        );
+      }
+      if (platformRole === 'admin') {
+        return (
+          <ManageCoursesPage variant="admin" initialOpenCreate={openCreateCourse} />
+        );
+      }
     }
 
-    const statLabel =
-      platformRole === 'estudiante'
-        ? 'Mis inscripciones'
-        : platformRole === 'instructor'
-          ? 'Mis cursos'
-          : 'Cursos en la plataforma';
+    if (platformRole === 'estudiante') {
+      return <StudentDashboard onNavigate={handleNavClick} />;
+    }
+    if (platformRole === 'instructor') {
+      return <InstructorDashboard onNavigate={handleNavClick} />;
+    }
+    if (platformRole === 'admin') {
+      return <AdminDashboard onNavigate={handleNavClick} />;
+    }
 
     return (
-      <>
-        <section className="greeting">
-          <h1>¡Hola, {user?.nombre || 'Usuario'}!</h1>
-          <p className="greeting-sub">
-            {areaLabel} · Resumen de tu actividad en VITA.
-          </p>
-        </section>
-
-        <section className="stats-row">
-          <div className="stat-card">
-            <div className="stat-icon">
-              <Icon name="book" size={18} />
-            </div>
-            <div className="stat-content">
-              <div className="stat-meta">{statLabel}</div>
-              <div className="stat-value">{dashboardLoading ? '…' : dashboardCount}</div>
-            </div>
-          </div>
-        </section>
-
-        <section id="continuar-aprendiendo" className="continue-section">
-          <div className="section-heading">
-            <h3>Accesos rápidos</h3>
-          </div>
-          <div className="quick-actions">
-            {platformRole === 'estudiante' && (
-              <>
-                <button type="button" className="continue-btn" onClick={() => handleNavClick('explore')}>
-                  Explorar cursos
-                </button>
-                <button type="button" className="continue-btn" onClick={() => handleNavClick('my-courses')}>
-                  Ver mis cursos
-                </button>
-              </>
-            )}
-            {(platformRole === 'instructor' || platformRole === 'admin') && (
-              <button type="button" className="continue-btn" onClick={() => handleNavClick('my-courses')}>
-                Gestionar cursos
-              </button>
-            )}
-            {platformRole === 'admin' && (
-              <button type="button" className="continue-btn" onClick={() => handleNavClick('reports')}>
-                Ver reportes
-              </button>
-            )}
-          </div>
-          {!coursePermissions.viewCourse && (
-            <div className="no-courses" role="alert">
-              <strong>Acceso no permitido</strong>
-              <span>No tienes permisos para realizar esta acción.</span>
-            </div>
-          )}
-        </section>
-      </>
+      <section className="greeting">
+        <h1>¡Hola, {user?.nombre || 'Usuario'}!</h1>
+        <p className="greeting-sub">{areaLabel}</p>
+      </section>
     );
   };
 
