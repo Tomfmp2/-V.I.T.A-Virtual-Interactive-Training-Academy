@@ -19,8 +19,26 @@ export const ExploreCoursesPage = ({ mode = 'enroll' }: ExploreCoursesPageProps)
   const [feedback, setFeedback] = useState('');
   const [enrollingCourseId, setEnrollingCourseId] = useState<number | null>(null);
   const [enrollErrors, setEnrollErrors] = useState<Record<number, string>>({});
+  const [searchTerm, setSearchTerm] = useState('');
 
   const publishedCourses = useMemo(() => courses.filter(isPublishedCourse), [courses]);
+
+  const filteredCourses = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return publishedCourses;
+    return publishedCourses.filter((course) => {
+      const haystack = [
+        course.titulo,
+        course.categoriaNombre,
+        course.nivelNombre,
+        course.instructorNombre,
+        course.descripcionCorta ?? '',
+      ]
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(term);
+    });
+  }, [publishedCourses, searchTerm]);
 
   const loadCourses = useCallback(async () => {
     setIsLoading(true);
@@ -83,6 +101,19 @@ export const ExploreCoursesPage = ({ mode = 'enroll' }: ExploreCoursesPageProps)
         </p>
       )}
 
+      <div className="domain-toolbar">
+        <label className="domain-field" style={{ marginBottom: 0, flex: '1 1 240px' }}>
+          <span>Buscar en el catálogo</span>
+          <input
+            type="search"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Título, categoría, nivel o instructor"
+            aria-label="Buscar cursos"
+          />
+        </label>
+      </div>
+
       {isLoading ? (
         <p className="domain-state" role="status">
           Cargando cursos…
@@ -95,12 +126,15 @@ export const ExploreCoursesPage = ({ mode = 'enroll' }: ExploreCoursesPageProps)
           </button>
         </div>
       ) : publishedCourses.length === 0 ? (
-        <p className="domain-state">
-          No hay cursos publicados disponibles en este momento.
-        </p>
+        <div className="domain-state domain-empty">
+          <strong>No hay cursos publicados</strong>
+          <span>Vuelve más tarde o pide a un instructor que publique contenido.</span>
+        </div>
+      ) : filteredCourses.length === 0 ? (
+        <p className="domain-state">Ningún curso coincide con “{searchTerm}”.</p>
       ) : (
         <div className="domain-card-grid">
-          {publishedCourses.map((course) => (
+          {filteredCourses.map((course) => (
             <article key={course.id} className="domain-card">
               <span className="domain-badge domain-badge-cyan">{course.categoriaNombre}</span>
               <h2 className="domain-card-title">{course.titulo}</h2>

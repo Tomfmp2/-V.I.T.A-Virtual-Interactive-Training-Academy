@@ -5,13 +5,14 @@ import { getRolesApi } from '../../api/rolesApi';
 import {
   createUserApi,
   getUsersApi,
+  updateUserApi,
   updateUserRoleApi,
   updateUserStatusApi,
 } from '../../api/usersApi';
 import { getApiErrorMessage } from '../../utils/apiErrors';
 import { isAdminRole } from '../../utils/coursePermissions';
 import type { Role } from '../../types/role';
-import type { AdminUser, CreateUserRequest } from '../../types/user';
+import type { AdminUser, CreateUserRequest, UpdateUserRequest } from '../../types/user';
 import './DomainShared.css';
 
 const emptyCreateForm: CreateUserRequest = {
@@ -20,6 +21,12 @@ const emptyCreateForm: CreateUserRequest = {
   email: '',
   password: '',
   rol: '',
+};
+
+const emptyEditForm: UpdateUserRequest = {
+  nombre: '',
+  apellido: '',
+  email: '',
 };
 
 export const UsersPage = () => {
@@ -33,6 +40,8 @@ export const UsersPage = () => {
   const [feedback, setFeedback] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [createForm, setCreateForm] = useState<CreateUserRequest>(emptyCreateForm);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<UpdateUserRequest>(emptyEditForm);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
@@ -88,6 +97,42 @@ export const UsersPage = () => {
     }
   };
 
+  const openEditUser = (target: AdminUser) => {
+    setEditingUserId(target.id);
+    setEditForm({
+      nombre: target.nombre,
+      apellido: target.apellido,
+      email: target.email,
+    });
+    setSaveError('');
+    setIsFormOpen(false);
+    setFeedback('');
+  };
+
+  const handleEditSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!editingUserId) return;
+
+    setIsSaving(true);
+    setSaveError('');
+
+    try {
+      await updateUserApi(editingUserId, {
+        nombre: editForm.nombre.trim(),
+        apellido: editForm.apellido.trim(),
+        email: editForm.email.trim(),
+      });
+      setFeedback(`Usuario "${editForm.nombre} ${editForm.apellido}" actualizado.`);
+      setEditingUserId(null);
+      setEditForm(emptyEditForm);
+      await loadData();
+    } catch (error) {
+      setSaveError(getApiErrorMessage(error, 'No se pudo actualizar el usuario.'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleToggleActive = async (target: AdminUser) => {
     setUpdatingUserId(target.id);
     setFeedback('');
@@ -133,6 +178,7 @@ export const UsersPage = () => {
           type="button"
           className="domain-btn-primary"
           onClick={() => {
+            setEditingUserId(null);
             setIsFormOpen((open) => !open);
             setSaveError('');
           }}
@@ -141,10 +187,77 @@ export const UsersPage = () => {
         </button>
       </header>
 
+      <p className="domain-alert domain-alert-info" role="note">
+        {isLoading
+          ? 'Cargando usuarios…'
+          : `${users.length} usuarios en la plataforma. Rol y estado se cambian desde la tabla; los datos personales con Editar.`}
+      </p>
+
       {feedback && (
         <p className="domain-alert domain-alert-success" role="status">
           {feedback}
         </p>
+      )}
+
+      {editingUserId && (
+        <form className="domain-form" onSubmit={(event) => void handleEditSubmit(event)}>
+          <h2>Editar usuario</h2>
+          <div className="domain-form-grid">
+            <label className="domain-field">
+              <span>Nombre</span>
+              <input
+                type="text"
+                required
+                value={editForm.nombre}
+                onChange={(event) =>
+                  setEditForm((current) => ({ ...current, nombre: event.target.value }))
+                }
+              />
+            </label>
+            <label className="domain-field">
+              <span>Apellido</span>
+              <input
+                type="text"
+                required
+                value={editForm.apellido}
+                onChange={(event) =>
+                  setEditForm((current) => ({ ...current, apellido: event.target.value }))
+                }
+              />
+            </label>
+            <label className="domain-field">
+              <span>Correo electrónico</span>
+              <input
+                type="email"
+                required
+                value={editForm.email}
+                onChange={(event) =>
+                  setEditForm((current) => ({ ...current, email: event.target.value }))
+                }
+              />
+            </label>
+          </div>
+          {saveError && (
+            <p className="domain-inline-error" role="alert">
+              {saveError}
+            </p>
+          )}
+          <div className="domain-form-actions">
+            <button
+              type="button"
+              className="domain-btn-ghost"
+              onClick={() => {
+                setEditingUserId(null);
+                setSaveError('');
+              }}
+            >
+              Cancelar
+            </button>
+            <button type="submit" className="domain-btn-primary" disabled={isSaving}>
+              {isSaving ? 'Guardando…' : 'Guardar cambios'}
+            </button>
+          </div>
+        </form>
       )}
 
       {isFormOpen && (
@@ -267,6 +380,7 @@ export const UsersPage = () => {
                   <th scope="col">Correo</th>
                   <th scope="col">Rol</th>
                   <th scope="col">Activo</th>
+                  <th scope="col">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -300,6 +414,15 @@ export const UsersPage = () => {
                         {item.activo ? 'Activo' : 'Inactivo'}
                       </button>
                     </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="domain-btn-ghost"
+                        onClick={() => openEditUser(item)}
+                      >
+                        Editar
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -328,6 +451,13 @@ export const UsersPage = () => {
                   </select>
                 </label>
                 <div className="domain-card-actions">
+                  <button
+                    type="button"
+                    className="domain-btn-ghost"
+                    onClick={() => openEditUser(item)}
+                  >
+                    Editar
+                  </button>
                   <button
                     type="button"
                     className={item.activo ? 'domain-btn-ghost' : 'domain-btn-primary'}
