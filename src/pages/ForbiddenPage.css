@@ -10,9 +10,9 @@
 .forbidden-card {
   width: min(100%, 430px);
   padding: 36px;
-  border: 1px solid #26364d;
+  border: 1px solid rgba(34, 211, 238, 0.12);
   border-radius: 14px;
-  background: #1c2a40;
+  background: #111e33;
   text-align: center;
 }
 

@@ -1,3 +1,15 @@
+:root {
+  --domain-bg: #0b1120;
+  --domain-surface: #111e33;
+  --domain-surface-deep: #0d172a;
+  --domain-border: rgba(34, 211, 238, 0.12);
+  --domain-border-muted: rgba(148, 163, 184, 0.14);
+  --domain-input: #0b1220;
+  --domain-text: #e2e8f0;
+  --domain-muted: #94a3b8;
+  --domain-accent: #00e676;
+}
+
 .domain-page {
   max-width: 980px;
   margin: 0 auto;
@@ -25,9 +37,9 @@
 .domain-state {
   margin: 28px 0 0;
   padding: 28px;
-  border: 1px dashed #26364d;
+  border: 1px dashed var(--domain-border-muted);
   border-radius: 14px;
-  background: #1c2a40;
+  background: var(--domain-surface);
   color: #94a3b8;
   text-align: center;
 }
@@ -79,9 +91,9 @@
 .domain-form {
   margin-top: 24px;
   padding: 24px;
-  border: 1px solid #26364d;
+  border: 1px solid var(--domain-border);
   border-radius: 14px;
-  background: #1c2a40;
+  background: var(--domain-surface);
 }
 
 .domain-form h2,
@@ -116,9 +128,9 @@
 .domain-field select {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #334155;
+  border: 1px solid var(--domain-border-muted);
   border-radius: 10px;
-  background: #0b1220;
+  background: var(--domain-input);
   color: #e2e8f0;
   font: inherit;
   outline: none;
@@ -173,7 +185,7 @@
 }
 
 .domain-btn-ghost {
-  border: 1px solid #334155;
+  border: 1px solid var(--domain-border-muted);
   background: transparent;
   color: #cbd5e1;
 }
@@ -203,9 +215,9 @@
 
 .domain-table-wrapper {
   margin-top: 24px;
-  border: 1px solid #26364d;
+  border: 1px solid var(--domain-border);
   border-radius: 14px;
-  background: #1c2a40;
+  background: var(--domain-surface);
   overflow-x: auto;
 }
 
@@ -220,7 +232,7 @@
 .domain-table td {
   padding: 14px 18px;
   text-align: left;
-  border-bottom: 1px solid #26364d;
+  border-bottom: 1px solid var(--domain-border-muted);
   vertical-align: middle;
 }
 
@@ -253,19 +265,34 @@
 }
 
 .domain-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding: 20px;
-  border: 1px solid #26364d;
-  border-radius: 14px;
-  background: #1c2a40;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 12px;
+  background: #111e33;
+  overflow: hidden;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.domain-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #10b981, #00e676);
 }
 
 .domain-card.is-selected {
-  border-color: rgba(0, 230, 118, 0.55);
-  box-shadow: 0 0 0 1px rgba(0, 230, 118, 0.25);
+  border-color: rgba(0, 230, 118, 0.45);
+  box-shadow: 0 0 0 1px rgba(0, 230, 118, 0.2);
+}
+
+.domain-card:hover {
+  border-color: rgba(0, 230, 118, 0.28);
 }
 
 .domain-empty {
@@ -284,7 +311,7 @@
   padding: 20px;
   border: 1px solid rgba(0, 230, 118, 0.25);
   border-radius: 16px;
-  background: linear-gradient(180deg, rgba(0, 230, 118, 0.06), transparent 120px), #152033;
+  background: linear-gradient(180deg, rgba(0, 230, 118, 0.05), transparent 140px), var(--domain-surface);
 }
 
 .lesson-panel-sticky {
@@ -315,7 +342,7 @@
 }
 
 .lesson-resource-link {
-  color: #67e8f9;
+  color: #86efac;
   text-decoration: none;
 }
 
@@ -337,9 +364,9 @@
 
 .dash-stat {
   padding: 18px;
-  border: 1px solid #26364d;
-  border-radius: 14px;
-  background: #1c2a40;
+  border: 1px solid rgba(34, 211, 238, 0.12);
+  border-radius: 12px;
+  background: #111e33;
 }
 
 .dash-stat-label {
@@ -392,9 +419,9 @@
   gap: 12px;
   flex-wrap: wrap;
   padding: 14px 16px;
-  border: 1px solid #26364d;
+  border: 1px solid rgba(34, 211, 238, 0.12);
   border-radius: 12px;
-  background: #1c2a40;
+  background: #111e33;
 }
 
 .dash-list-item strong {
@@ -454,15 +481,16 @@
 }
 
 .domain-badge-muted {
-  border: 1px solid #334155;
+  border: 1px solid var(--domain-border-muted);
   background: rgba(148, 163, 184, 0.08);
   color: #94a3b8;
 }
 
-.domain-badge-cyan {
-  border: 1px solid rgba(34, 211, 238, 0.35);
-  background: rgba(34, 211, 238, 0.1);
-  color: #a5f3fc;
+.domain-badge-cyan,
+.domain-badge-category {
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.12);
+  color: #34d399;
 }
 
 .domain-inline-error {

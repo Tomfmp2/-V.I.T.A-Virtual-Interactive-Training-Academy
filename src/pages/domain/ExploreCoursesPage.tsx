@@ -155,7 +155,7 @@ export const ExploreCoursesPage = ({
         <div className="domain-card-grid">
           {filteredCourses.map((course) => (
             <article key={course.id} className="domain-card">
-              <span className="domain-badge domain-badge-cyan">{course.categoriaNombre}</span>
+              <span className="domain-badge domain-badge-category">{course.categoriaNombre}</span>
               <h2 className="domain-card-title">{course.titulo}</h2>
               <p className="domain-card-meta">
                 {course.descripcionCorta || 'Sin descripción corta.'}
