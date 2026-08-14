@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getCoursesApi } from '../../api/coursesApi';
 import { enrollApi } from '../../api/enrollmentsApi';
+import { CoursePlayerView } from '../../components/domain/CoursePlayerView';
 import { resolveEnrollmentError } from '../../utils/apiErrors';
 import { matchesCourseSearch } from '../../utils/courseSearch';
 import type { CourseListItem } from '../../types/course';
@@ -27,6 +28,7 @@ export const ExploreCoursesPage = ({
   const [enrollingCourseId, setEnrollingCourseId] = useState<number | null>(null);
   const [enrollErrors, setEnrollErrors] = useState<Record<number, string>>({});
   const [searchTerm, setSearchTerm] = useState(externalSearch ?? '');
+  const [openCourse, setOpenCourse] = useState<{ id: number; title: string } | null>(null);
 
   useEffect(() => {
     if (externalSearch !== undefined) {
@@ -88,6 +90,17 @@ export const ExploreCoursesPage = ({
 
   const showEnrollActions = mode === 'enroll';
 
+  if (openCourse) {
+    return (
+      <CoursePlayerView
+        courseId={openCourse.id}
+        fallbackTitle={openCourse.title}
+        backLabel="Volver al catálogo"
+        onBack={() => setOpenCourse(null)}
+      />
+    );
+  }
+
   return (
     <section className="domain-page" aria-labelledby="explore-courses-title">
       <header className="domain-heading">
@@ -95,8 +108,8 @@ export const ExploreCoursesPage = ({
           <h1 id="explore-courses-title">Explorar cursos</h1>
           <p>
             {showEnrollActions
-              ? 'Descubre cursos publicados e inscríbete con un clic.'
-              : 'Consulta el catálogo de cursos publicados.'}
+              ? 'Inscríbete o abre un curso para ver sus lecciones.'
+              : 'Consulta el catálogo y abre el contenido de cada curso.'}
           </p>
         </div>
       </header>
@@ -147,15 +160,18 @@ export const ExploreCoursesPage = ({
               <p className="domain-card-meta">
                 {course.descripcionCorta || 'Sin descripción corta.'}
               </p>
-              <p className="domain-card-meta">
-                Instructor: {course.instructorNombre}
-              </p>
-              <p className="domain-card-meta">
-                Nivel: {course.nivelNombre}
-              </p>
+              <p className="domain-card-meta">Instructor: {course.instructorNombre}</p>
+              <p className="domain-card-meta">Nivel: {course.nivelNombre}</p>
 
-              {showEnrollActions && (
-                <div className="domain-card-actions">
+              <div className="domain-card-actions">
+                <button
+                  type="button"
+                  className="domain-btn-ghost"
+                  onClick={() => setOpenCourse({ id: course.id, title: course.titulo })}
+                >
+                  Ver lecciones
+                </button>
+                {showEnrollActions && (
                   <button
                     type="button"
                     className="domain-btn-primary"
@@ -164,8 +180,8 @@ export const ExploreCoursesPage = ({
                   >
                     {enrollingCourseId === course.id ? 'Inscribiendo…' : 'Inscribirme'}
                   </button>
-                </div>
-              )}
+                )}
+              </div>
 
               {enrollErrors[course.id] && (
                 <p className="domain-inline-error" role="alert">

@@ -429,6 +429,14 @@
   padding-top: 8px;
 }
 
+.domain-card-clickable {
+  cursor: default;
+}
+
+.domain-card-clickable .domain-card-actions {
+  margin-top: 4px;
+}
+
 .domain-badge {
   display: inline-block;
   padding: 3px 10px;

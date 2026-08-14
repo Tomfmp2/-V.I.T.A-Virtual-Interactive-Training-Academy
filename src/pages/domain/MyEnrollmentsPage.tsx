@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getMyEnrollmentsApi } from '../../api/enrollmentsApi';
+import { CoursePlayerView } from '../../components/domain/CoursePlayerView';
 import { matchesTextSearch } from '../../utils/courseSearch';
 import type { Enrollment } from '../../types/enrollment';
 import './DomainShared.css';
@@ -27,6 +28,7 @@ export const MyEnrollmentsPage = ({
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [searchTerm, setSearchTerm] = useState(externalSearch ?? '');
+  const [openCourse, setOpenCourse] = useState<{ id: number; title: string } | null>(null);
 
   useEffect(() => {
     if (externalSearch !== undefined) {
@@ -67,12 +69,23 @@ export const MyEnrollmentsPage = ({
     onSearchTermChange?.(value);
   };
 
+  if (openCourse) {
+    return (
+      <CoursePlayerView
+        courseId={openCourse.id}
+        fallbackTitle={openCourse.title}
+        backLabel="Volver a mis cursos"
+        onBack={() => setOpenCourse(null)}
+      />
+    );
+  }
+
   return (
     <section className="domain-page" aria-labelledby="my-enrollments-title">
       <header className="domain-heading">
         <div>
           <h1 id="my-enrollments-title">Mis inscripciones</h1>
-          <p>Consulta los cursos en los que estás inscrito.</p>
+          <p>Abre un curso para ver lecciones y continuar aprendiendo.</p>
         </div>
       </header>
 
@@ -110,7 +123,7 @@ export const MyEnrollmentsPage = ({
       ) : (
         <div className="domain-card-grid">
           {filteredEnrollments.map((enrollment) => (
-            <article key={enrollment.id} className="domain-card">
+            <article key={enrollment.id} className="domain-card domain-card-clickable">
               <h2 className="domain-card-title">{enrollment.cursoTitulo}</h2>
               <p className="domain-card-meta">
                 Inscripción: {formatEnrollmentDate(enrollment.fechaInscripcion)}
@@ -119,6 +132,17 @@ export const MyEnrollmentsPage = ({
                 Estado:{' '}
                 <span className="domain-badge domain-badge-success">{enrollment.estado}</span>
               </p>
+              <div className="domain-card-actions">
+                <button
+                  type="button"
+                  className="domain-btn-primary"
+                  onClick={() =>
+                    setOpenCourse({ id: enrollment.cursoId, title: enrollment.cursoTitulo })
+                  }
+                >
+                  Abrir curso
+                </button>
+              </div>
             </article>
           ))}
         </div>
