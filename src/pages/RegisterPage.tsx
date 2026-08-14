@@ -6,6 +6,8 @@ import './LoginPage.css';
 import { AuthLayout } from '../components/auth/AuthLayout';
 import { AxiosError } from 'axios';
 import { registerApi, loginApi } from '../api/authApi';
+import { getRoleHomePath } from '../utils/coursePermissions';
+import { getApiErrorMessage } from '../utils/apiErrors';
 
 const UserIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -101,7 +103,7 @@ export const RegisterPage = () => {
         const loginResponse = await loginApi({ email, password });
         const { token, usuario } = loginResponse;
         login(token, usuario);
-        setTimeout(() => navigate('/home'), 700);
+        setTimeout(() => navigate(getRoleHomePath(usuario.rol) ?? '/403'), 700);
       } catch (loginErr) {
         // Si el login automático falla, redirigir a /login mostrando mensaje
         console.error('Auto login falló tras registro:', loginErr);
@@ -119,7 +121,7 @@ export const RegisterPage = () => {
         } else if (typeof status === 'number' && status >= 500) {
           nextErrors.form = 'No pudimos crear tu cuenta en este momento. Inténtalo nuevamente.';
         } else {
-          nextErrors.form = err.response?.data?.message || 'Ocurrió un error. Intenta nuevamente.';
+          nextErrors.form = getApiErrorMessage(err, 'Ocurrió un error. Intenta nuevamente.');
         }
       } else {
         nextErrors.form = 'No pudimos conectar con el servidor. Inténtalo nuevamente.';

@@ -5,6 +5,7 @@ import { AxiosError } from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { loginApi } from '../api/authApi';
 import { getRoleHomePath } from '../utils/coursePermissions';
+import { getApiErrorMessage } from '../utils/apiErrors';
 
 const MailIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -104,7 +105,7 @@ export const LoginForm = () => {
         } else if (typeof status === 'number' && status >= 500) {
           nextFormErrors.form = 'No pudimos iniciar sesión en este momento. Inténtalo nuevamente.';
         } else {
-          nextFormErrors.form = error.response?.data?.message || 'Ocurrió un error. Inténtalo nuevamente.';
+          nextFormErrors.form = getApiErrorMessage(error, 'Ocurrió un error. Inténtalo nuevamente.');
         }
       } else {
         nextFormErrors.form = 'No pudimos conectar con el servidor. Inténtalo nuevamente.';

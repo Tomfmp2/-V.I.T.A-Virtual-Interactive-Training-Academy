@@ -49,3 +49,12 @@ export const getRoleHomePath = (role?: string | null): string | null => {
   if (!platformRole) return null;
   return `/${platformRole}`;
 };
+
+export const isAdminRole = (role?: string | null): boolean =>
+  normalizePlatformRole(role) === 'admin';
+
+export const isInstructorRole = (role?: string | null): boolean =>
+  normalizePlatformRole(role) === 'instructor';
+
+export const isStudentRole = (role?: string | null): boolean =>
+  normalizePlatformRole(role) === 'estudiante';
