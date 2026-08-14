@@ -46,3 +46,20 @@ export const changeCourseStatusApi = async (
 export const deleteCourseApi = async (id: number): Promise<void> => {
   await api.delete(`/courses/${id}`);
 };
+
+/**
+ * Sube la portada de un curso (/api/courses/{id}/cover)
+ */
+export const uploadCourseCoverApi = async (
+  id: number,
+  file: File,
+): Promise<{ imagenPortadaUrl: string }> => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await api.post<{ imagenPortadaUrl: string }>(`/courses/${id}/cover`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+
+  return response.data;
+};

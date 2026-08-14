@@ -10,6 +10,7 @@ import {
   getCoursesApi,
   getMyCoursesApi,
   updateCourseApi,
+  uploadCourseCoverApi,
 } from '../../api/coursesApi';
 import {
   createLessonApi,
@@ -22,6 +23,7 @@ import { LessonListPanel } from '../../components/domain/LessonListPanel';
 import { getApiErrorMessage } from '../../utils/apiErrors';
 import { matchesCourseSearch } from '../../utils/courseSearch';
 import { isAdminRole, normalizePlatformRole } from '../../utils/coursePermissions';
+import { getCourseCoverUrl } from '../../utils/profilePhoto';
 import type { Category } from '../../types/category';
 import type {
   CourseAdminCreateRequest,
@@ -34,6 +36,9 @@ import type { Lesson, LessonRequest } from '../../types/lesson';
 import type { AdminUser } from '../../types/user';
 import './DomainShared.css';
 import './ManageCoursesPage.css';
+
+const COVER_ACCEPT = 'image/jpeg,image/png,image/webp';
+const COVER_MAX_BYTES = 2 * 1024 * 1024;
 
 export interface ManageCoursesPageProps {
   variant: 'instructor' | 'admin';
@@ -109,6 +114,9 @@ export const ManageCoursesPage = ({
   const [isCourseFormOpen, setIsCourseFormOpen] = useState(initialOpenCreate);
   const [editingCourseId, setEditingCourseId] = useState<number | null>(null);
   const [courseForm, setCourseForm] = useState<CourseFormState>(emptyCourseForm);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [existingCoverUrl, setExistingCoverUrl] = useState<string | null>(null);
   const [isSavingCourse, setIsSavingCourse] = useState(false);
   const [courseSaveError, setCourseSaveError] = useState('');
   const [statusUpdatingId, setStatusUpdatingId] = useState<number | null>(null);
@@ -211,6 +219,14 @@ export const ManageCoursesPage = ({
   }, [searchTerm]);
 
   useEffect(() => {
+    return () => {
+      if (coverPreview?.startsWith('blob:')) {
+        URL.revokeObjectURL(coverPreview);
+      }
+    };
+  }, [coverPreview]);
+
+  useEffect(() => {
     if (selectedCourseId == null) {
       setLessons([]);
       setIsLessonFormOpen(false);
@@ -233,9 +249,48 @@ export const ManageCoursesPage = ({
     );
   }
 
+  const resetCoverState = () => {
+    setCoverFile(null);
+    setCoverPreview((current) => {
+      if (current?.startsWith('blob:')) URL.revokeObjectURL(current);
+      return null;
+    });
+    setExistingCoverUrl(null);
+  };
+
+  const handleCoverFileChange = (fileList: FileList | null) => {
+    const file = fileList?.[0] ?? null;
+    if (!file) {
+      setCoverFile(null);
+      setCoverPreview((current) => {
+        if (current?.startsWith('blob:')) URL.revokeObjectURL(current);
+        return existingCoverUrl ? getCourseCoverUrl(existingCoverUrl) : null;
+      });
+      return;
+    }
+
+    if (!COVER_ACCEPT.split(',').includes(file.type)) {
+      setCourseSaveError('Formato no permitido. Usa JPG, PNG o WEBP.');
+      return;
+    }
+
+    if (file.size > COVER_MAX_BYTES) {
+      setCourseSaveError('La imagen no puede superar 2 MB.');
+      return;
+    }
+
+    setCourseSaveError('');
+    setCoverFile(file);
+    setCoverPreview((current) => {
+      if (current?.startsWith('blob:')) URL.revokeObjectURL(current);
+      return URL.createObjectURL(file);
+    });
+  };
+
   const openCreateCourseForm = () => {
     setEditingCourseId(null);
     setCourseForm(emptyCourseForm);
+    resetCoverState();
     setIsCourseFormOpen(true);
     setCourseSaveError('');
   };
@@ -255,6 +310,12 @@ export const ManageCoursesPage = ({
       primeraLeccionDescripcion: '',
       primeraLeccionRecurso: '',
     });
+    setCoverFile(null);
+    setCoverPreview((current) => {
+      if (current?.startsWith('blob:')) URL.revokeObjectURL(current);
+      return getCourseCoverUrl(course.imagenPortadaUrl);
+    });
+    setExistingCoverUrl(course.imagenPortadaUrl ?? null);
     setIsCourseFormOpen(true);
     setCourseSaveError('');
     setFeedback('');
@@ -274,6 +335,11 @@ export const ManageCoursesPage = ({
         setCourseSaveError('Debes añadir al menos una lección al crear el curso.');
         return;
       }
+
+      if (!coverFile) {
+        setCourseSaveError('Debes seleccionar una imagen de portada.');
+        return;
+      }
     }
 
     setIsSavingCourse(true);
@@ -286,6 +352,8 @@ export const ManageCoursesPage = ({
     };
 
     try {
+      let courseId = editingCourseId;
+
       if (editingCourseId != null) {
         await updateCourseApi(editingCourseId, payload);
         setFeedback(`Curso "${payload.titulo}" actualizado.`);
@@ -295,6 +363,7 @@ export const ManageCoursesPage = ({
           idInstructor: courseForm.idInstructor.trim(),
         };
         const created = await createCourseApi(adminPayload);
+        courseId = created.id;
         await createLessonApi(created.id, {
           titulo: courseForm.primeraLeccionTitulo.trim(),
           descripcion: courseForm.primeraLeccionDescripcion.trim() || null,
@@ -305,6 +374,7 @@ export const ManageCoursesPage = ({
         setSelectedCourseId(created.id);
       } else {
         const created = await createCourseApi(payload);
+        courseId = created.id;
         await createLessonApi(created.id, {
           titulo: courseForm.primeraLeccionTitulo.trim(),
           descripcion: courseForm.primeraLeccionDescripcion.trim() || null,
@@ -315,8 +385,13 @@ export const ManageCoursesPage = ({
         setSelectedCourseId(created.id);
       }
 
+      if (coverFile && courseId != null) {
+        await uploadCourseCoverApi(courseId, coverFile);
+      }
+
       setCourseForm(emptyCourseForm);
       setEditingCourseId(null);
+      resetCoverState();
       setIsCourseFormOpen(false);
       await loadCourses();
     } catch (error) {
@@ -573,6 +648,24 @@ export const ManageCoursesPage = ({
                 />
               </label>
 
+              <label className="domain-field">
+                <span>Portada {isCreatingCourse ? '(obligatoria)' : '(opcional)'}</span>
+                <input
+                  type="file"
+                  accept={COVER_ACCEPT}
+                  required={isCreatingCourse}
+                  onChange={(event) => handleCoverFileChange(event.target.files)}
+                />
+                <span className="manage-cover-hint">JPG, PNG o WEBP · máximo 2 MB</span>
+                {coverPreview && (
+                  <img
+                    src={coverPreview}
+                    alt="Vista previa de la portada"
+                    className="manage-cover-preview"
+                  />
+                )}
+              </label>
+
               <div className="domain-form-grid">
                 <label className="domain-field">
                   <span>Categoría</span>
@@ -707,6 +800,7 @@ export const ManageCoursesPage = ({
                 onClick={() => {
                   setIsCourseFormOpen(false);
                   setEditingCourseId(null);
+                  resetCoverState();
                   setCourseSaveError('');
                 }}
               >
@@ -720,7 +814,8 @@ export const ManageCoursesPage = ({
                   (isAdminVariant &&
                     isCreatingCourse &&
                     (!courseForm.idInstructor.trim() || instructors.length === 0)) ||
-                  (isCreatingCourse && !courseForm.primeraLeccionTitulo.trim())
+                  (isCreatingCourse && !courseForm.primeraLeccionTitulo.trim()) ||
+                  (isCreatingCourse && !coverFile)
                 }
               >
                 {isSavingCourse
@@ -804,6 +899,7 @@ export const ManageCoursesPage = ({
                 {filteredCourses.map((course) => {
                   const isPublished = normalizeCourseStatus(course.estado) === 'publicado';
                   const isActive = selectedCourseId === course.id;
+                  const coverSrc = getCourseCoverUrl(course.imagenPortadaUrl);
 
                   return (
                     <li key={course.id}>
@@ -813,16 +909,27 @@ export const ManageCoursesPage = ({
                         onClick={() => selectCourseForLessons(course.id)}
                         aria-current={isActive ? 'true' : undefined}
                       >
-                        <h2 className="manage-course-title">{course.titulo}</h2>
-                        <span
-                          className={`manage-course-status ${isPublished ? 'is-published' : 'is-draft'}`}
-                        >
-                          {course.estado}
-                        </span>
-                        <p className="manage-course-meta">
-                          {course.categoriaNombre} · {course.nivelNombre}
-                          {isAdminVariant ? ` · ${course.instructorNombre}` : ''}
-                        </p>
+                        {coverSrc ? (
+                          <img
+                            src={coverSrc}
+                            alt=""
+                            className="manage-course-thumb"
+                          />
+                        ) : (
+                          <span className="manage-course-thumb manage-course-thumb-empty" aria-hidden />
+                        )}
+                        <div className="manage-course-item-body">
+                          <h2 className="manage-course-title">{course.titulo}</h2>
+                          <span
+                            className={`manage-course-status ${isPublished ? 'is-published' : 'is-draft'}`}
+                          >
+                            {course.estado}
+                          </span>
+                          <p className="manage-course-meta">
+                            {course.categoriaNombre} · {course.nivelNombre}
+                            {isAdminVariant ? ` · ${course.instructorNombre}` : ''}
+                          </p>
+                        </div>
                       </button>
                     </li>
                   );

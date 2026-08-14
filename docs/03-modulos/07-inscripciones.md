@@ -38,8 +38,9 @@ Los textos los resuelve `resolveEnrollmentError`:
 | 404 | Curso no encontrado |
 | 409 | Ya estás inscrito en este curso |
 
-El 409 es el caso habitual y no es realmente un fallo: el usuario ya tiene lo que
-pedía. Se informa de forma clara en lugar de mostrarlo como un error del sistema.
+El 409 se trata como “ya inscrito”: se oculta Inscribirme y no se deja el error
+rojo en la tarjeta. Además, al montar la pantalla se carga `GET /enrollments/me`
+para no ofrecer Inscribirme en cursos donde el estudiante ya está.
 
 ### Indicador de la operación
 

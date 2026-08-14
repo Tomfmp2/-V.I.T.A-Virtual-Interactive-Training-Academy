@@ -43,6 +43,11 @@ filtro al backend con parámetros de consulta.
 await enrollApi({ cursoId: course.id });
 ```
 
+Al cargar el catálogo en modo `enroll` también se pide `GET /enrollments/me`. Los
+cursos ya inscritos **no muestran** el botón Inscribirme: solo queda Ver lecciones.
+Tras un alta correcta (o un 409 de ya inscrito) se marca el curso como inscrito en
+memoria para ocultar el botón de inmediato.
+
 Los errores se guardan por curso, no en una variable global:
 
 ```tsx
@@ -137,8 +142,19 @@ Campos que espera el backend:
 | `idNivel` | Sí | Debe existir |
 | `descripcionCorta` | No | Máximo 300 caracteres |
 | `descripcionLarga` | No | Sin límite |
-| `imagenPortadaUrl` | No | Máximo 255 caracteres |
+| `imagenPortadaUrl` | No | Máximo 255 caracteres; normalmente se rellena con `POST /courses/{id}/cover` |
 | `duracionEstimadaMin` | No | Entre 1 y 100000 |
+
+Tras crear el curso, el front sube la portada con multipart (mismo patrón que la foto
+de perfil):
+
+```tsx
+await uploadCourseCoverApi(created.id, coverFile);
+```
+
+Al crear, la portada es obligatoria en la UI. Al editar es opcional: si no se elige
+archivo nuevo, se conserva la portada actual (`PUT` no envía `imagenPortadaUrl` y el
+backend no la borra).
 
 Los nombres son los del backend (`idCategoria`, no `categoriaId`). Enviar otra
 variante produce un 400 por campo requerido ausente.
@@ -174,6 +190,7 @@ coincide con el estado real, incluidos los campos derivados que el backend calcu
 | Editar | `PUT /api/courses/{id}` |
 | Cambiar estado | `PATCH /api/courses/{id}/status` |
 | Borrar | `DELETE /api/courses/{id}` |
+| Subir portada | `POST /api/courses/{id}/cover` |
 
 Todos requieren sesión, incluido el listado del catálogo.
 

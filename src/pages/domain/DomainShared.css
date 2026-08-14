@@ -303,6 +303,29 @@
   transition: border-color 0.18s ease, background 0.18s ease;
 }
 
+.domain-card:has(.domain-card-cover) {
+  padding: 0;
+}
+
+.domain-card-cover {
+  display: block;
+  width: 100%;
+  height: 148px;
+  object-fit: cover;
+  background: #0b1220;
+}
+
+.domain-card-cover-empty {
+  background: linear-gradient(135deg, rgba(0, 230, 118, 0.16), rgba(15, 23, 42, 0.95));
+}
+
+.domain-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 18px 18px 16px;
+}
+
 .domain-card.is-selected {
   border-color: rgba(0, 230, 118, 0.55);
   background: #161f2f;

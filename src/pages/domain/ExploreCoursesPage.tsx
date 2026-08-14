@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getCoursesApi } from '../../api/coursesApi';
-import { enrollApi } from '../../api/enrollmentsApi';
+import { enrollApi, getMyEnrollmentsApi } from '../../api/enrollmentsApi';
 import { CoursePlayerView } from '../../components/domain/CoursePlayerView';
-import { resolveEnrollmentError } from '../../utils/apiErrors';
+import { getHttpStatus, resolveEnrollmentError } from '../../utils/apiErrors';
 import { matchesCourseSearch } from '../../utils/courseSearch';
+import { getCourseCoverUrl } from '../../utils/profilePhoto';
 import type { CourseListItem } from '../../types/course';
 import './DomainShared.css';
 
@@ -22,6 +23,7 @@ export const ExploreCoursesPage = ({
   onSearchTermChange,
 }: ExploreCoursesPageProps) => {
   const [courses, setCourses] = useState<CourseListItem[]>([]);
+  const [enrolledCourseIds, setEnrolledCourseIds] = useState<Set<number>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [feedback, setFeedback] = useState('');
@@ -29,6 +31,8 @@ export const ExploreCoursesPage = ({
   const [enrollErrors, setEnrollErrors] = useState<Record<number, string>>({});
   const [searchTerm, setSearchTerm] = useState(externalSearch ?? '');
   const [openCourse, setOpenCourse] = useState<{ id: number; title: string } | null>(null);
+
+  const showEnrollActions = mode === 'enroll';
 
   useEffect(() => {
     if (externalSearch !== undefined) {
@@ -48,23 +52,38 @@ export const ExploreCoursesPage = ({
     onSearchTermChange?.(value);
   };
 
-  const loadCourses = useCallback(async () => {
+  const markEnrolled = (courseId: number) => {
+    setEnrolledCourseIds((current) => {
+      if (current.has(courseId)) return current;
+      const next = new Set(current);
+      next.add(courseId);
+      return next;
+    });
+  };
+
+  const loadCatalog = useCallback(async () => {
     setIsLoading(true);
     setLoadError('');
 
     try {
-      const data = await getCoursesApi();
-      setCourses(data);
+      const coursesPromise = getCoursesApi();
+      const enrollmentsPromise = showEnrollActions
+        ? getMyEnrollmentsApi().catch(() => [])
+        : Promise.resolve([]);
+
+      const [coursesData, enrollments] = await Promise.all([coursesPromise, enrollmentsPromise]);
+      setCourses(coursesData);
+      setEnrolledCourseIds(new Set(enrollments.map((item) => item.cursoId)));
     } catch {
       setLoadError('No se pudo cargar el catálogo de cursos. Intenta de nuevo.');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [showEnrollActions]);
 
   useEffect(() => {
-    void loadCourses();
-  }, [loadCourses]);
+    void loadCatalog();
+  }, [loadCatalog]);
 
   const handleEnroll = async (course: CourseListItem) => {
     setEnrollingCourseId(course.id);
@@ -77,8 +96,15 @@ export const ExploreCoursesPage = ({
 
     try {
       await enrollApi({ cursoId: course.id });
+      markEnrolled(course.id);
       setFeedback(`Te inscribiste en "${course.titulo}".`);
     } catch (error) {
+      if (getHttpStatus(error) === 409) {
+        markEnrolled(course.id);
+        setFeedback(`Ya estabas inscrito en "${course.titulo}".`);
+        return;
+      }
+
       setEnrollErrors((current) => ({
         ...current,
         [course.id]: resolveEnrollmentError(error),
@@ -87,8 +113,6 @@ export const ExploreCoursesPage = ({
       setEnrollingCourseId(null);
     }
   };
-
-  const showEnrollActions = mode === 'enroll';
 
   if (openCourse) {
     return (
@@ -140,7 +164,7 @@ export const ExploreCoursesPage = ({
       ) : loadError ? (
         <div className="domain-alert domain-alert-error" role="alert">
           <span>{loadError}</span>
-          <button type="button" className="domain-btn-ghost" onClick={() => void loadCourses()}>
+          <button type="button" className="domain-btn-ghost" onClick={() => void loadCatalog()}>
             Reintentar
           </button>
         </div>
@@ -153,51 +177,67 @@ export const ExploreCoursesPage = ({
         <p className="domain-state">Ningún curso coincide con “{searchTerm}”.</p>
       ) : (
         <div className="domain-card-grid">
-          {filteredCourses.map((course) => (
-            <article key={course.id} className="domain-card">
-              <span className="domain-badge domain-badge-category">{course.categoriaNombre}</span>
-              <h2 className="domain-card-title">{course.titulo}</h2>
-              <p className="domain-card-desc">
-                {course.descripcionCorta || 'Sin descripción corta.'}
-              </p>
-              <dl className="domain-card-facts">
-                <div>
-                  <dt>Instructor</dt>
-                  <dd>{course.instructorNombre}</dd>
-                </div>
-                <div>
-                  <dt>Nivel</dt>
-                  <dd>{course.nivelNombre}</dd>
-                </div>
-              </dl>
+          {filteredCourses.map((course) => {
+            const coverSrc = getCourseCoverUrl(course.imagenPortadaUrl);
+            const isEnrolled = enrolledCourseIds.has(course.id);
 
-              <div className="domain-card-actions">
-                <button
-                  type="button"
-                  className="domain-btn-ghost"
-                  onClick={() => setOpenCourse({ id: course.id, title: course.titulo })}
-                >
-                  Ver lecciones
-                </button>
-                {showEnrollActions && (
-                  <button
-                    type="button"
-                    className="domain-btn-primary"
-                    disabled={enrollingCourseId === course.id}
-                    onClick={() => void handleEnroll(course)}
-                  >
-                    {enrollingCourseId === course.id ? 'Inscribiendo…' : 'Inscribirme'}
-                  </button>
+            return (
+              <article key={course.id} className="domain-card">
+                {coverSrc ? (
+                  <img
+                    src={coverSrc}
+                    alt={`Portada de ${course.titulo}`}
+                    className="domain-card-cover"
+                  />
+                ) : (
+                  <div className="domain-card-cover domain-card-cover-empty" aria-hidden />
                 )}
-              </div>
+                <div className="domain-card-body">
+                  <span className="domain-badge domain-badge-category">{course.categoriaNombre}</span>
+                  <h2 className="domain-card-title">{course.titulo}</h2>
+                  <p className="domain-card-desc">
+                    {course.descripcionCorta || 'Sin descripción corta.'}
+                  </p>
+                  <dl className="domain-card-facts">
+                    <div>
+                      <dt>Instructor</dt>
+                      <dd>{course.instructorNombre}</dd>
+                    </div>
+                    <div>
+                      <dt>Nivel</dt>
+                      <dd>{course.nivelNombre}</dd>
+                    </div>
+                  </dl>
 
-              {enrollErrors[course.id] && (
-                <p className="domain-inline-error" role="alert">
-                  {enrollErrors[course.id]}
-                </p>
-              )}
-            </article>
-          ))}
+                  <div className="domain-card-actions">
+                    <button
+                      type="button"
+                      className="domain-btn-ghost"
+                      onClick={() => setOpenCourse({ id: course.id, title: course.titulo })}
+                    >
+                      Ver lecciones
+                    </button>
+                    {showEnrollActions && !isEnrolled && (
+                      <button
+                        type="button"
+                        className="domain-btn-primary"
+                        disabled={enrollingCourseId === course.id}
+                        onClick={() => void handleEnroll(course)}
+                      >
+                        {enrollingCourseId === course.id ? 'Inscribiendo…' : 'Inscribirme'}
+                      </button>
+                    )}
+                  </div>
+
+                  {enrollErrors[course.id] && (
+                    <p className="domain-inline-error" role="alert">
+                      {enrollErrors[course.id]}
+                    </p>
+                  )}
+                </div>
+              </article>
+            );
+          })}
         </div>
       )}
     </section>
