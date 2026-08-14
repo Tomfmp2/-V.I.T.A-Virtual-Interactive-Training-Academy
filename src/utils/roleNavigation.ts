@@ -4,9 +4,9 @@ export type RoleNavIcon =
   | 'dashboard'
   | 'courses'
   | 'explore'
-  | 'certificate'
   | 'users'
   | 'categories'
+  | 'reports'
   | 'settings';
 
 export interface RoleNavItem {
@@ -20,20 +20,21 @@ const navItemsByRole: Record<PlatformRole, RoleNavItem[]> = {
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
     { id: 'my-courses', label: 'Cursos', icon: 'courses' },
     { id: 'explore', label: 'Explorar', icon: 'explore' },
-    { id: 'certs', label: 'Certificados', icon: 'certificate' },
     { id: 'users', label: 'Usuarios', icon: 'users' },
     { id: 'categories', label: 'Categorías', icon: 'categories' },
+    { id: 'reports', label: 'Reportes', icon: 'reports' },
     { id: 'settings', label: 'Configuración', icon: 'settings' },
   ],
   instructor: [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
     { id: 'my-courses', label: 'Mis Clases', icon: 'courses' },
     { id: 'explore', label: 'Explorar', icon: 'explore' },
-    { id: 'certs', label: 'Certificados', icon: 'certificate' },
+    { id: 'reports', label: 'Reportes', icon: 'reports' },
     { id: 'settings', label: 'Configuración', icon: 'settings' },
   ],
   estudiante: [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+    { id: 'explore', label: 'Explorar', icon: 'explore' },
     { id: 'my-courses', label: 'Mis Cursos', icon: 'courses' },
     { id: 'settings', label: 'Configuración', icon: 'settings' },
   ],
