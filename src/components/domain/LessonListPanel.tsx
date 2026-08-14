@@ -15,6 +15,7 @@ export type LessonListPanelProps = {
   formError: string;
   isSaving: boolean;
   deletingLessonId: number | null;
+  compact?: boolean;
   onRetry: () => void;
   onClosePanel: () => void;
   onOpenCreate: () => void;
@@ -36,6 +37,7 @@ export const LessonListPanel = ({
   formError,
   isSaving,
   deletingLessonId,
+  compact = false,
   onRetry,
   onClosePanel,
   onOpenCreate,
@@ -48,32 +50,38 @@ export const LessonListPanel = ({
   const panelRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, [courseTitle]);
+    if (!compact) {
+      panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [courseTitle, compact]);
 
   return (
     <section
       ref={panelRef}
-      className="domain-section lesson-panel"
+      className={`domain-section lesson-panel ${compact ? 'is-compact' : ''}`}
       aria-labelledby="lessons-section-title"
     >
       <div className="lesson-panel-sticky">
         <div className="domain-toolbar">
           <div>
-            <p className="lesson-panel-eyebrow">Lecciones del curso</p>
-            <h2 id="lessons-section-title">{courseTitle}</h2>
+            {!compact && <p className="lesson-panel-eyebrow">Lecciones</p>}
+            <h2 id="lessons-section-title">
+              {compact ? `Lecciones · ${lessons.length}` : courseTitle}
+            </h2>
           </div>
           <div className="domain-row-actions">
-            <button type="button" className="domain-btn-ghost" onClick={onClosePanel}>
-              Cerrar panel
-            </button>
+            {!compact && (
+              <button type="button" className="domain-btn-ghost" onClick={onClosePanel}>
+                Cerrar
+              </button>
+            )}
             <button
               type="button"
               className="domain-btn-primary"
               onClick={onOpenCreate}
               disabled={isFormOpen && formMode === 'create'}
             >
-              {lessons.length === 0 ? 'Crear primera lección' : 'Nueva lección'}
+              {lessons.length === 0 ? 'Primera lección' : 'Nueva lección'}
             </button>
           </div>
         </div>
@@ -104,75 +112,48 @@ export const LessonListPanel = ({
         </div>
       ) : lessons.length === 0 ? (
         <div className="domain-state domain-empty">
-          <strong>Este curso aún no tiene lecciones</strong>
-          <span>Crea la primera para que el contenido quede listo antes de publicar.</span>
+          <strong>Sin lecciones todavía</strong>
+          <span>Añade la primera para completar el curso.</span>
           {!isFormOpen && (
             <button type="button" className="domain-btn-primary" onClick={onOpenCreate}>
-              Crear primera lección
+              Crear lección
             </button>
           )}
         </div>
       ) : (
-        <div className="domain-table-wrapper">
-          <table className="domain-table">
-            <thead>
-              <tr>
-                <th scope="col">Orden</th>
-                <th scope="col">Título</th>
-                <th scope="col">Recurso</th>
-                <th scope="col">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lessons.map((lesson) => (
-                <tr key={lesson.id}>
-                  <td>{lesson.orden}</td>
-                  <td>
-                    <div className="lesson-title-cell">
-                      <strong>{lesson.titulo}</strong>
-                      {lesson.descripcion ? (
-                        <span className="domain-card-meta">{lesson.descripcion}</span>
-                      ) : null}
-                    </div>
-                  </td>
-                  <td>
-                    {lesson.recurso ? (
-                      <a
-                        className="lesson-resource-link"
-                        href={lesson.recurso}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Abrir recurso
-                      </a>
-                    ) : (
-                      '—'
-                    )}
-                  </td>
-                  <td>
-                    <div className="domain-row-actions">
-                      <button
-                        type="button"
-                        className="domain-btn-ghost"
-                        onClick={() => onEditLesson(lesson)}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        className="domain-btn-danger"
-                        disabled={deletingLessonId === lesson.id}
-                        onClick={() => onDeleteLesson(lesson)}
-                      >
-                        {deletingLessonId === lesson.id ? 'Eliminando…' : 'Eliminar'}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ul className="lesson-row-list">
+          {lessons.map((lesson) => (
+            <li key={lesson.id} className="lesson-row">
+              <span className="lesson-row-orden">{lesson.orden}</span>
+              <div className="lesson-row-body">
+                <strong>{lesson.titulo}</strong>
+                {lesson.descripcion ? <span>{lesson.descripcion}</span> : null}
+                {lesson.recurso ? (
+                  <a href={lesson.recurso} target="_blank" rel="noreferrer">
+                    {lesson.recurso}
+                  </a>
+                ) : null}
+              </div>
+              <div className="lesson-row-actions">
+                <button
+                  type="button"
+                  className="domain-btn-ghost"
+                  onClick={() => onEditLesson(lesson)}
+                >
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  className="domain-btn-danger"
+                  disabled={deletingLessonId === lesson.id}
+                  onClick={() => onDeleteLesson(lesson)}
+                >
+                  {deletingLessonId === lesson.id ? '…' : 'Eliminar'}
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   );

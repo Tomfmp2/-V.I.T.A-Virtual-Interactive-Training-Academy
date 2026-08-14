@@ -32,6 +32,7 @@ import type { Level } from '../../types/level';
 import type { Lesson, LessonRequest } from '../../types/lesson';
 import type { AdminUser } from '../../types/user';
 import './DomainShared.css';
+import './ManageCoursesPage.css';
 
 export interface ManageCoursesPageProps {
   variant: 'instructor' | 'admin';
@@ -87,6 +88,7 @@ export const ManageCoursesPage = ({
   const [instructors, setInstructors] = useState<AdminUser[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'publicado' | 'borrador'>('all');
 
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -114,6 +116,20 @@ export const ManageCoursesPage = ({
     () => courses.find((course) => course.id === selectedCourseId) ?? null,
     [courses, selectedCourseId],
   );
+
+  const filteredCourses = useMemo(() => {
+    if (statusFilter === 'all') return courses;
+    return courses.filter(
+      (course) => normalizeCourseStatus(course.estado) === statusFilter,
+    );
+  }, [courses, statusFilter]);
+
+  const publishedCount = useMemo(
+    () => courses.filter((course) => normalizeCourseStatus(course.estado) === 'publicado').length,
+    [courses],
+  );
+
+  const draftCount = courses.length - publishedCount;
 
   const loadCourses = useCallback(async () => {
     if (!canAccess) return;
@@ -393,12 +409,12 @@ export const ManageCoursesPage = ({
 
   const pageTitle = isAdminVariant ? 'Cursos' : 'Mis cursos';
   const pageDescription = isAdminVariant
-    ? 'Crea cursos, publícalos y administra lecciones por curso.'
-    : 'Crea tus cursos, añade lecciones y publícalos cuando estén listos.';
+    ? 'Selecciona un curso para editar lecciones y estado.'
+    : 'Selecciona un curso, gestiona lecciones y publícalo cuando esté listo.';
 
   return (
-    <section className="domain-page" aria-labelledby="manage-courses-title">
-      <header className="domain-heading">
+    <section className="manage-page" aria-labelledby="manage-courses-title">
+      <header className="manage-header">
         <div>
           <h1 id="manage-courses-title">{pageTitle}</h1>
           <p>{pageDescription}</p>
@@ -415,89 +431,87 @@ export const ManageCoursesPage = ({
             openCreateCourseForm();
           }}
         >
-          {isCourseFormOpen && editingCourseId == null ? 'Cerrar formulario' : 'Nuevo curso'}
+          {isCourseFormOpen && editingCourseId == null ? 'Cerrar' : 'Nuevo curso'}
         </button>
       </header>
 
-      <p className="domain-alert domain-alert-info" role="note">
-        Flujo recomendado: crea el curso → abre <strong>Lecciones</strong> → añade contenido →
-        publica.
-      </p>
-
       {feedback && (
-        <p className="domain-alert domain-alert-success" role="status">
+        <p className="domain-alert domain-alert-success manage-feedback" role="status">
           {feedback}
         </p>
       )}
 
       {isCourseFormOpen && (
-        <form className="domain-form" onSubmit={(event) => void handleCourseSubmit(event)}>
-          <h2>{editingCourseId != null ? 'Editar curso' : 'Crear curso'}</h2>
+        <div className="manage-form-wrap">
+          <form className="domain-form" onSubmit={(event) => void handleCourseSubmit(event)}>
+            <h2>{editingCourseId != null ? 'Editar curso' : 'Nuevo curso'}</h2>
 
-          <label className="domain-field">
-            <span>Título</span>
-            <input
-              type="text"
-              required
-              minLength={5}
-              value={courseForm.titulo}
-              onChange={(event) =>
-                setCourseForm((current) => ({ ...current, titulo: event.target.value }))
-              }
-            />
-          </label>
-
-          <label className="domain-field">
-            <span>Descripción corta</span>
-            <textarea
-              rows={3}
-              value={courseForm.descripcionCorta}
-              onChange={(event) =>
-                setCourseForm((current) => ({ ...current, descripcionCorta: event.target.value }))
-              }
-            />
-          </label>
-
-          <div className="domain-form-grid">
             <label className="domain-field">
-              <span>Categoría</span>
-              <select
+              <span>Título</span>
+              <input
+                type="text"
                 required
-                value={courseForm.idCategoria}
+                minLength={5}
+                value={courseForm.titulo}
                 onChange={(event) =>
-                  setCourseForm((current) => ({ ...current, idCategoria: event.target.value }))
+                  setCourseForm((current) => ({ ...current, titulo: event.target.value }))
                 }
-              >
-                <option value="">Selecciona una categoría</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.nombre}
-                  </option>
-                ))}
-              </select>
+              />
             </label>
 
             <label className="domain-field">
-              <span>Nivel</span>
-              <select
-                required
-                value={courseForm.idNivel}
+              <span>Descripción corta</span>
+              <textarea
+                rows={2}
+                value={courseForm.descripcionCorta}
                 onChange={(event) =>
-                  setCourseForm((current) => ({ ...current, idNivel: event.target.value }))
+                  setCourseForm((current) => ({
+                    ...current,
+                    descripcionCorta: event.target.value,
+                  }))
                 }
-              >
-                <option value="">Selecciona un nivel</option>
-                {levels.map((level) => (
-                  <option key={level.id} value={level.id}>
-                    {level.nombre}
-                  </option>
-                ))}
-              </select>
+              />
             </label>
-          </div>
 
-          {isAdminVariant && editingCourseId == null && (
-            <>
+            <div className="domain-form-grid">
+              <label className="domain-field">
+                <span>Categoría</span>
+                <select
+                  required
+                  value={courseForm.idCategoria}
+                  onChange={(event) =>
+                    setCourseForm((current) => ({ ...current, idCategoria: event.target.value }))
+                  }
+                >
+                  <option value="">Selecciona</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.nombre}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="domain-field">
+                <span>Nivel</span>
+                <select
+                  required
+                  value={courseForm.idNivel}
+                  onChange={(event) =>
+                    setCourseForm((current) => ({ ...current, idNivel: event.target.value }))
+                  }
+                >
+                  <option value="">Selecciona</option>
+                  {levels.map((level) => (
+                    <option key={level.id} value={level.id}>
+                      {level.nombre}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            {isAdminVariant && editingCourseId == null && (
               <label className="domain-field">
                 <span>Instructor</span>
                 <select
@@ -510,49 +524,73 @@ export const ManageCoursesPage = ({
                   <option value="">Selecciona un instructor</option>
                   {instructors.map((instructor) => (
                     <option key={instructor.id} value={instructor.id}>
-                      {instructor.nombre} {instructor.apellido} ({instructor.email})
+                      {instructor.nombre} {instructor.apellido}
                     </option>
                   ))}
                 </select>
               </label>
-            </>
-          )}
+            )}
 
-          {courseSaveError && (
-            <p className="domain-inline-error" role="alert">
-              {courseSaveError}
-            </p>
-          )}
+            {courseSaveError && (
+              <p className="domain-inline-error" role="alert">
+                {courseSaveError}
+              </p>
+            )}
 
-          <div className="domain-form-actions">
-            <button
-              type="button"
-              className="domain-btn-ghost"
-              onClick={() => {
-                setIsCourseFormOpen(false);
-                setEditingCourseId(null);
-                setCourseSaveError('');
-              }}
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="domain-btn-primary"
-              disabled={
-                isSavingCourse ||
-                (isAdminVariant && editingCourseId == null && !courseForm.idInstructor.trim())
-              }
-            >
-              {isSavingCourse
-                ? 'Guardando…'
-                : editingCourseId != null
-                  ? 'Guardar cambios'
-                  : 'Crear curso'}
-            </button>
-          </div>
-        </form>
+            <div className="domain-form-actions">
+              <button
+                type="button"
+                className="domain-btn-ghost"
+                onClick={() => {
+                  setIsCourseFormOpen(false);
+                  setEditingCourseId(null);
+                  setCourseSaveError('');
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="domain-btn-primary"
+                disabled={
+                  isSavingCourse ||
+                  (isAdminVariant && editingCourseId == null && !courseForm.idInstructor.trim())
+                }
+              >
+                {isSavingCourse
+                  ? 'Guardando…'
+                  : editingCourseId != null
+                    ? 'Guardar'
+                    : 'Crear'}
+              </button>
+            </div>
+          </form>
+        </div>
       )}
+
+      <div className="manage-filters" role="tablist" aria-label="Filtrar cursos">
+        <button
+          type="button"
+          className={`manage-filter ${statusFilter === 'all' ? 'is-active' : ''}`}
+          onClick={() => setStatusFilter('all')}
+        >
+          Todos ({courses.length})
+        </button>
+        <button
+          type="button"
+          className={`manage-filter ${statusFilter === 'publicado' ? 'is-active' : ''}`}
+          onClick={() => setStatusFilter('publicado')}
+        >
+          Publicados ({publishedCount})
+        </button>
+        <button
+          type="button"
+          className={`manage-filter ${statusFilter === 'borrador' ? 'is-active' : ''}`}
+          onClick={() => setStatusFilter('borrador')}
+        >
+          Borradores ({draftCount})
+        </button>
+      </div>
 
       {isLoading ? (
         <p className="domain-state" role="status">
@@ -568,101 +606,122 @@ export const ManageCoursesPage = ({
       ) : courses.length === 0 ? (
         <div className="domain-state domain-empty">
           <strong>Todavía no hay cursos</strong>
-          <span>Crea el primero y luego añade lecciones antes de publicar.</span>
+          <span>Crea el primero y añade lecciones antes de publicar.</span>
           <button type="button" className="domain-btn-primary" onClick={openCreateCourseForm}>
             Nuevo curso
           </button>
         </div>
       ) : (
-        <div className="domain-card-grid">
-          {courses.map((course) => {
-            const isPublished = normalizeCourseStatus(course.estado) === 'publicado';
-            const isSelected = selectedCourseId === course.id;
+        <div className="manage-layout">
+          <aside className="manage-list-panel" aria-label="Lista de cursos">
+            <div className="manage-list-head">
+              <strong>Cursos</strong>
+              <span>{filteredCourses.length}</span>
+            </div>
+            {filteredCourses.length === 0 ? (
+              <p className="domain-state">No hay cursos en este filtro.</p>
+            ) : (
+              <ul className="manage-course-list">
+                {filteredCourses.map((course) => {
+                  const isPublished = normalizeCourseStatus(course.estado) === 'publicado';
+                  const isActive = selectedCourseId === course.id;
 
-            return (
-              <article
-                key={course.id}
-                className={`domain-card ${isSelected ? 'is-selected' : ''}`}
-                aria-current={isSelected ? 'true' : undefined}
-              >
-                <span
-                  className={`domain-badge ${isPublished ? 'domain-badge-success' : 'domain-badge-muted'}`}
-                >
-                  {course.estado}
-                </span>
-                <h2 className="domain-card-title">{course.titulo}</h2>
-                <p className="domain-card-meta">
-                  {course.categoriaNombre} · {course.nivelNombre}
-                </p>
-                <p className="domain-card-meta">Instructor: {course.instructorNombre}</p>
+                  return (
+                    <li key={course.id}>
+                      <button
+                        type="button"
+                        className={`manage-course-item ${isActive ? 'is-active' : ''}`}
+                        onClick={() => selectCourseForLessons(course.id)}
+                        aria-current={isActive ? 'true' : undefined}
+                      >
+                        <h2 className="manage-course-title">{course.titulo}</h2>
+                        <span
+                          className={`manage-course-status ${isPublished ? 'is-published' : 'is-draft'}`}
+                        >
+                          {course.estado}
+                        </span>
+                        <p className="manage-course-meta">
+                          {course.categoriaNombre} · {course.nivelNombre}
+                          {isAdminVariant ? ` · ${course.instructorNombre}` : ''}
+                        </p>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </aside>
 
-                <div className="domain-card-actions">
-                  <button
-                    type="button"
-                    className="domain-btn-primary"
-                    onClick={() => selectCourseForLessons(course.id)}
-                  >
-                    {isSelected ? 'Lecciones (activo)' : 'Lecciones'}
-                  </button>
+          <div className="manage-detail-panel">
+            {!selectedCourse ? (
+              <div className="manage-detail-empty">
+                <strong>Elige un curso</strong>
+                <span>Selecciona uno de la lista para ver lecciones y acciones.</span>
+              </div>
+            ) : (
+              <>
+                <div className="manage-course-toolbar">
+                  <h2>{selectedCourse.titulo}</h2>
                   <button
                     type="button"
                     className="domain-btn-ghost"
-                    disabled={statusUpdatingId === course.id}
-                    onClick={() => void handleToggleStatus(course)}
+                    disabled={statusUpdatingId === selectedCourse.id}
+                    onClick={() => void handleToggleStatus(selectedCourse)}
                   >
-                    {statusUpdatingId === course.id
-                      ? 'Actualizando…'
-                      : isPublished
-                        ? 'A borrador'
+                    {statusUpdatingId === selectedCourse.id
+                      ? '…'
+                      : normalizeCourseStatus(selectedCourse.estado) === 'publicado'
+                        ? 'Pasar a borrador'
                         : 'Publicar'}
                   </button>
                   <button
                     type="button"
                     className="domain-btn-ghost"
-                    onClick={() => openEditCourseForm(course)}
+                    onClick={() => openEditCourseForm(selectedCourse)}
                   >
                     Editar
                   </button>
                   <button
                     type="button"
                     className="domain-btn-danger"
-                    disabled={deletingCourseId === course.id}
-                    onClick={() => void handleDeleteCourse(course)}
+                    disabled={deletingCourseId === selectedCourse.id}
+                    onClick={() => void handleDeleteCourse(selectedCourse)}
                   >
-                    {deletingCourseId === course.id ? 'Eliminando…' : 'Eliminar'}
+                    {deletingCourseId === selectedCourse.id ? '…' : 'Eliminar'}
                   </button>
                 </div>
-              </article>
-            );
-          })}
-        </div>
-      )}
 
-      {selectedCourse && (
-        <LessonListPanel
-          courseTitle={selectedCourse.titulo}
-          lessons={lessons}
-          isLoading={isLoadingLessons}
-          error={lessonsError}
-          isFormOpen={isLessonFormOpen}
-          formMode={lessonFormMode}
-          formValue={lessonForm}
-          formError={lessonSaveError}
-          isSaving={isSavingLesson}
-          deletingLessonId={deletingLessonId}
-          onRetry={() => void loadLessons(selectedCourse.id)}
-          onClosePanel={() => setSelectedCourseId(null)}
-          onOpenCreate={openLessonCreate}
-          onFormChange={setLessonForm}
-          onFormCancel={() => {
-            setIsLessonFormOpen(false);
-            setEditingLessonId(null);
-            setLessonSaveError('');
-          }}
-          onFormSubmit={(event) => void handleLessonSubmit(event)}
-          onEditLesson={openLessonEdit}
-          onDeleteLesson={(lesson) => void handleDeleteLesson(lesson)}
-        />
+                <div className="lesson-workspace">
+                  <LessonListPanel
+                    courseTitle={selectedCourse.titulo}
+                    lessons={lessons}
+                    isLoading={isLoadingLessons}
+                    error={lessonsError}
+                    isFormOpen={isLessonFormOpen}
+                    formMode={lessonFormMode}
+                    formValue={lessonForm}
+                    formError={lessonSaveError}
+                    isSaving={isSavingLesson}
+                    deletingLessonId={deletingLessonId}
+                    compact
+                    onRetry={() => void loadLessons(selectedCourse.id)}
+                    onClosePanel={() => setSelectedCourseId(null)}
+                    onOpenCreate={openLessonCreate}
+                    onFormChange={setLessonForm}
+                    onFormCancel={() => {
+                      setIsLessonFormOpen(false);
+                      setEditingLessonId(null);
+                      setLessonSaveError('');
+                    }}
+                    onFormSubmit={(event) => void handleLessonSubmit(event)}
+                    onEditLesson={openLessonEdit}
+                    onDeleteLesson={(lesson) => void handleDeleteLesson(lesson)}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       )}
     </section>
   );
