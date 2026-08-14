@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { getCategoriesApi } from '../../api/categoriesApi';
 import { getLevelsApi } from '../../api/levelsApi';
 import {

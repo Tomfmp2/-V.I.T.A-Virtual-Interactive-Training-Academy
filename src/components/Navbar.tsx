@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { getRoleHomePath, normalizePlatformRole } from '../utils/coursePermissions';
 import BrandLogo from './BrandLogo';
 import './Navbar.css';

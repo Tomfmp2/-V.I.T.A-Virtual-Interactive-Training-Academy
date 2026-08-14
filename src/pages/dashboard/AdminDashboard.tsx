@@ -3,7 +3,7 @@ import { getCategoriesApi } from '../../api/categoriesApi';
 import { getCoursesApi } from '../../api/coursesApi';
 import { getTopCoursesReportApi } from '../../api/reportsApi';
 import { getUsersApi } from '../../api/usersApi';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import type { Category } from '../../types/category';
 import type { CourseListItem } from '../../types/course';
 import type { TopCourseItem } from '../../types/report';

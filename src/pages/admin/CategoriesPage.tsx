@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { useCategories } from '../../hooks/useCategories';
 import { createCategoryApi, deleteCategoryApi, updateCategoryApi } from '../../api/categoriesApi';
 import { getCoursePermissions } from '../../utils/coursePermissions';

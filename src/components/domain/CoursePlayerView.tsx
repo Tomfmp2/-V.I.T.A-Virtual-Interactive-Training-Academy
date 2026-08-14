@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getCourseByIdApi } from '../../api/coursesApi';
 import { getLessonsApi } from '../../api/lessonsApi';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { matchesTextSearch } from '../../utils/courseSearch';
 import {
   getCompletedLessonIds,

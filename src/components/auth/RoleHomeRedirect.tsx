@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { getRoleHomePath } from '../../utils/coursePermissions';
 
 /** Sends an authenticated user to the dashboard assigned to their role. */

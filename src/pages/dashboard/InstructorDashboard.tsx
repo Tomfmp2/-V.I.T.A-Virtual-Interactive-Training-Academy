@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getMyCoursesApi } from '../../api/coursesApi';
 import { getLessonsApi } from '../../api/lessonsApi';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import type { CourseListItem } from '../../types/course';
 import '../domain/DomainShared.css';
 

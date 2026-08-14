@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AxiosError } from 'axios';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { loginApi } from '../api/authApi';
 import { getRoleHomePath } from '../utils/coursePermissions';
 import { getApiErrorMessage } from '../utils/apiErrors';

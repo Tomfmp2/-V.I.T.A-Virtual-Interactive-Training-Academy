@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { getMeApi, updateProfileApi } from '../api/authApi';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { getApiErrorMessage } from '../utils/apiErrors';
 import './PerfilPage.css';
 
