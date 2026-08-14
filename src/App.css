@@ -184,7 +184,8 @@
 }
 
 /* Ensure BrandLogo is visible on dark navbars without changing the SVG */
-.navigationBar .brand-logo-svg {
+.navigationBar .brand-logo-svg,
+.vita-navbar .brand-logo-svg {
   background: #F8FAFC; /* light panel behind the SVG to preserve exact SVG colors */
   padding: 6px 10px;
   border-radius: 8px;
@@ -192,7 +193,8 @@
   align-items: center;
 }
 
-.navigationBar .brand-logo-svg svg {
+.navigationBar .brand-logo-svg svg,
+.vita-navbar .brand-logo-svg svg {
   height: 40px;
   width: auto;
   display: block;

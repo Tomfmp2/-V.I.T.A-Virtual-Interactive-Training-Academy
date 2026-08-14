@@ -35,20 +35,25 @@
   padding: 0;
 }
 
-/* Navigation */
+/* Navigation — shell full-bleed; el layout lo resuelve .vita-navbar */
 .navigationBar {
-  height: 72px;
-  background: rgba(7,19,36,0.6);
-  backdrop-filter: blur(8px);
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
   position: sticky;
   top: 0;
   z-index: 1000;
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 1rem;
+  display: block;
+  box-sizing: border-box;
+  background: transparent;
+  border: 0;
 }
+
+.navigationBar .vita-navbar {
+  width: 100%;
+}
+
 
 .navLeft {
   display: flex;
@@ -806,10 +811,6 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .navigationBar {
-    padding: 0 1rem;
-  }
-  
   .navCenter {
     display: none;
   }
