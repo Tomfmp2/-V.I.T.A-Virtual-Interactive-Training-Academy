@@ -1,0 +1,344 @@
+.domain-page {
+  max-width: 980px;
+  margin: 0 auto;
+  color: #f8fafc;
+}
+
+.domain-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.domain-heading h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.domain-heading p {
+  margin: 6px 0 0;
+  color: #94a3b8;
+}
+
+.domain-state {
+  margin: 28px 0 0;
+  padding: 28px;
+  border: 1px dashed #26364d;
+  border-radius: 14px;
+  background: #1c2a40;
+  color: #94a3b8;
+  text-align: center;
+}
+
+/* ============ Alertas ============ */
+
+.domain-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 20px 0 0;
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.domain-alert-error {
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  background: rgba(248, 113, 113, 0.12);
+  color: #fecaca;
+}
+
+.domain-alert-success {
+  border: 1px solid rgba(0, 230, 118, 0.35);
+  background: rgba(0, 230, 118, 0.12);
+  color: #86efac;
+}
+
+.domain-alert-info {
+  border: 1px solid rgba(34, 211, 238, 0.35);
+  background: rgba(34, 211, 238, 0.1);
+  color: #a5f3fc;
+}
+
+/* ============ Toolbar ============ */
+
+.domain-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+/* ============ Formulario ============ */
+
+.domain-form {
+  margin-top: 24px;
+  padding: 24px;
+  border: 1px solid #26364d;
+  border-radius: 14px;
+  background: #1c2a40;
+}
+
+.domain-form h2,
+.domain-section h2 {
+  margin: 0 0 18px;
+  font-size: 18px;
+}
+
+.domain-section {
+  margin-top: 28px;
+}
+
+.domain-field {
+  display: block;
+  margin-bottom: 16px;
+}
+
+.domain-field > span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: #cbd5e1;
+}
+
+.domain-field > span small {
+  color: #64748b;
+  font-weight: 400;
+}
+
+.domain-field input,
+.domain-field textarea,
+.domain-field select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  background: #0b1220;
+  color: #e2e8f0;
+  font: inherit;
+  outline: none;
+  resize: vertical;
+}
+
+.domain-field input:focus,
+.domain-field textarea:focus,
+.domain-field select:focus {
+  border-color: rgba(0, 230, 118, 0.5);
+}
+
+.domain-field input:disabled,
+.domain-field textarea:disabled,
+.domain-field select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.domain-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.domain-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+/* ============ Botones ============ */
+
+.domain-btn-primary,
+.domain-btn-ghost,
+.domain-btn-danger {
+  padding: 9px 16px;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.domain-btn-primary {
+  border: 0;
+  background: #00e676;
+  color: #0f172a;
+}
+
+.domain-btn-ghost {
+  border: 1px solid #334155;
+  background: transparent;
+  color: #cbd5e1;
+}
+
+.domain-btn-ghost:hover:not(:disabled) {
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.domain-btn-danger {
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  background: rgba(248, 113, 113, 0.12);
+  color: #fca5a5;
+}
+
+.domain-btn-danger:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.2);
+}
+
+.domain-btn-primary:disabled,
+.domain-btn-ghost:disabled,
+.domain-btn-danger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ============ Tabla ============ */
+
+.domain-table-wrapper {
+  margin-top: 24px;
+  border: 1px solid #26364d;
+  border-radius: 14px;
+  background: #1c2a40;
+  overflow-x: auto;
+}
+
+.domain-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  min-width: 520px;
+}
+
+.domain-table th,
+.domain-table td {
+  padding: 14px 18px;
+  text-align: left;
+  border-bottom: 1px solid #26364d;
+  vertical-align: middle;
+}
+
+.domain-table th {
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.domain-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.domain-row-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+/* ============ Tarjetas ============ */
+
+.domain-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.domain-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  border: 1px solid #26364d;
+  border-radius: 14px;
+  background: #1c2a40;
+}
+
+.domain-card-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.domain-card-meta {
+  margin: 0;
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+.domain-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.domain-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.domain-badge-success {
+  border: 1px solid rgba(0, 230, 118, 0.35);
+  background: rgba(0, 230, 118, 0.12);
+  color: #86efac;
+}
+
+.domain-badge-muted {
+  border: 1px solid #334155;
+  background: rgba(148, 163, 184, 0.08);
+  color: #94a3b8;
+}
+
+.domain-badge-cyan {
+  border: 1px solid rgba(34, 211, 238, 0.35);
+  background: rgba(34, 211, 238, 0.1);
+  color: #a5f3fc;
+}
+
+.domain-inline-error {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #fca5a5;
+}
+
+@media (max-width: 640px) {
+  .domain-heading {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .domain-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .domain-row-actions {
+    justify-content: flex-start;
+  }
+
+  .domain-form-actions {
+    justify-content: stretch;
+  }
+
+  .domain-form-actions .domain-btn-primary,
+  .domain-form-actions .domain-btn-ghost,
+  .domain-form-actions .domain-btn-danger {
+    flex: 1 1 auto;
+  }
+}
