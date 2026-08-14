@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Navbar } from '../components/Navbar';
 import BrandLogo from '../components/BrandLogo';
+import { LandingFooter } from '../components/LandingFooter';
 import { getRoleHomePath } from '../utils/coursePermissions';
 import './LandingPage.css';
 
@@ -137,24 +138,7 @@ export const LandingPage = () => {
           </div>
         </section>
 
-        <footer className="landing-footer">
-          <div className="landing-footer-inner">
-            <BrandLogo />
-            <p>VITA Learning Hub · formación técnica interactiva</p>
-            <div className="landing-footer-links">
-              <button type="button" className="landing-footer-link" onClick={() => navigate('/login')}>
-                Iniciar sesión
-              </button>
-              <button
-                type="button"
-                className="landing-footer-link"
-                onClick={() => navigate('/register')}
-              >
-                Crear cuenta
-              </button>
-            </div>
-          </div>
-        </footer>
+        <LandingFooter />
       </div>
     </>
   );
