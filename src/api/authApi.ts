@@ -1,5 +1,5 @@
 import api from './http';
-import type { User, LoginRequest, LoginResponse, RegisterRequest } from '../types/auth';
+import type { User, LoginRequest, LoginResponse, RegisterRequest, UpdateProfileRequest } from '../types/auth';
 
 export const loginApi = async (credentials: LoginRequest): Promise<LoginResponse> => {
   const response = await api.post<LoginResponse>('/auth/login', credentials);
@@ -16,6 +16,14 @@ export const registerApi = async (userData: RegisterRequest): Promise<any> => {
  */
 export const getMeApi = async (): Promise<User> => {
   const response = await api.get<User>('/auth/me');
+  return response.data;
+};
+
+/**
+ * Actualiza el perfil del usuario autenticado (/api/auth/me)
+ */
+export const updateProfileApi = async (payload: UpdateProfileRequest): Promise<User> => {
+  const response = await api.put<User>('/auth/me', payload);
   return response.data;
 };
 

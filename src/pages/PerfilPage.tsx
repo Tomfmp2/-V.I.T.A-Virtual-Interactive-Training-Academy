@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
+import { getMeApi, updateProfileApi } from '../api/authApi';
 import { useAuth } from '../context/AuthContext';
+import { getApiErrorMessage } from '../utils/apiErrors';
 import './PerfilPage.css';
 
 type ProfileFields = {
@@ -14,27 +16,41 @@ type ProfileFields = {
 
 type FormErrors = Partial<Record<keyof ProfileFields, string>>;
 
-const countries = [
-  { label: 'Colombia', code: '+57' },
-  { label: 'Perú', code: '+51' },
-  { label: 'México', code: '+52' },
-  { label: 'Argentina', code: '+54' },
-  { label: 'Chile', code: '+56' },
-  { label: 'Ecuador', code: '+593' },
-  { label: 'Venezuela', code: '+58' },
-  { label: 'Bolivia', code: '+591' },
-  { label: 'Brasil', code: '+55' },
-  { label: 'Estados Unidos', code: '+1' },
-  { label: 'Canadá', code: '+1' },
-  { label: 'España', code: '+34' },
+type CountryOption = {
+  id: string;
+  label: string;
+  code: string;
+};
+
+const countries: CountryOption[] = [
+  { id: 'co', label: 'Colombia', code: '+57' },
+  { id: 'pe', label: 'Perú', code: '+51' },
+  { id: 'mx', label: 'México', code: '+52' },
+  { id: 'ar', label: 'Argentina', code: '+54' },
+  { id: 'cl', label: 'Chile', code: '+56' },
+  { id: 'ec', label: 'Ecuador', code: '+593' },
+  { id: 've', label: 'Venezuela', code: '+58' },
+  { id: 'bo', label: 'Bolivia', code: '+591' },
+  { id: 'br', label: 'Brasil', code: '+55' },
+  { id: 'us', label: 'Estados Unidos', code: '+1' },
+  { id: 'ca', label: 'Canadá', code: '+1' },
+  { id: 'es', label: 'España', code: '+34' },
 ];
 
-type ExtendedUser = {
-  apellido?: string;
-  telefono?: string;
-  phone?: string;
-  countryCode?: string;
-  codigoPais?: string;
+const defaultCountryId = 'co';
+
+const findCountryIdByCode = (code?: string | null) => {
+  if (!code) return defaultCountryId;
+  return countries.find((country) => country.code === code)?.id ?? defaultCountryId;
+};
+
+const formatPhoneDisplay = (telefono?: string | null) => {
+  if (!telefono) return '';
+  const digits = telefono.replace(/\D/g, '');
+  if (digits.length === 10) {
+    return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+  }
+  return digits;
 };
 
 const EyeIcon = ({ isVisible }: { isVisible: boolean }) => (
@@ -46,13 +62,15 @@ const EyeIcon = ({ isVisible }: { isVisible: boolean }) => (
 );
 
 export const PerfilPage = () => {
-  const { user } = useAuth();
-  const profileUser = user as (typeof user & ExtendedUser) | null;
+  const { user, updateUser } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<FormErrors>({});
   const [saveMessage, setSaveMessage] = useState('');
-  const [countryCode, setCountryCode] = useState(profileUser?.countryCode ?? profileUser?.codigoPais ?? '+57');
+  const [loadError, setLoadError] = useState('');
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [countryId, setCountryId] = useState(defaultCountryId);
   const [visiblePasswords, setVisiblePasswords] = useState<Record<'currentPassword' | 'newPassword' | 'confirmPassword', boolean>>({
     currentPassword: false,
     newPassword: false,
@@ -60,22 +78,51 @@ export const PerfilPage = () => {
   });
   const [fields, setFields] = useState<ProfileFields>({
     nombre: user?.nombre ?? '',
-    apellido: profileUser?.apellido ?? '',
-    telefono: profileUser?.telefono ?? profileUser?.phone ?? '',
+    apellido: user?.apellido ?? '',
+    telefono: formatPhoneDisplay(user?.telefono),
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
 
+  const selectedCountry = countries.find((country) => country.id === countryId) ?? countries[0];
+
   useEffect(() => {
-    setFields((current) => ({
-      ...current,
-      nombre: user?.nombre ?? '',
-      apellido: profileUser?.apellido ?? '',
-      telefono: profileUser?.telefono ?? profileUser?.phone ?? '',
-    }));
-    setCountryCode(profileUser?.countryCode ?? profileUser?.codigoPais ?? '+57');
-  }, [user?.nombre, profileUser?.apellido, profileUser?.telefono, profileUser?.phone, profileUser?.countryCode, profileUser?.codigoPais]);
+    let cancelled = false;
+
+    const loadProfile = async () => {
+      setIsLoadingProfile(true);
+      setLoadError('');
+
+      try {
+        const profile = await getMeApi();
+        if (cancelled) return;
+
+        updateUser(profile);
+        setFields((current) => ({
+          ...current,
+          nombre: profile.nombre,
+          apellido: profile.apellido ?? '',
+          telefono: formatPhoneDisplay(profile.telefono),
+        }));
+        setCountryId(findCountryIdByCode(profile.codigoPais));
+      } catch (error) {
+        if (!cancelled) {
+          setLoadError(getApiErrorMessage(error, 'No se pudo cargar tu perfil.'));
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingProfile(false);
+        }
+      }
+    };
+
+    void loadProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [updateUser]);
 
   useEffect(() => {
     return () => {
@@ -87,6 +134,13 @@ export const PerfilPage = () => {
     setFields((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
     setSaveMessage('');
+    setLoadError('');
+  };
+
+  const handleCountryChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setCountryId(event.target.value);
+    setSaveMessage('');
+    setLoadError('');
   };
 
   const handlePhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -97,7 +151,7 @@ export const PerfilPage = () => {
     setSaveMessage('');
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const nextErrors: FormErrors = {};
     const isChangingPassword = Boolean(
@@ -118,14 +172,42 @@ export const PerfilPage = () => {
       return;
     }
 
+    if (isChangingPassword) {
+      setLoadError('El cambio de contraseña estará disponible pronto.');
+      return;
+    }
+
+    setIsSaving(true);
     setErrors({});
-    setSaveMessage('Cambios guardados en esta sesión.');
-    setFields((current) => ({
-      ...current,
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: '',
-    }));
+    setSaveMessage('');
+    setLoadError('');
+
+    try {
+      const telefonoDigits = fields.telefono.replace(/\D/g, '');
+      const updated = await updateProfileApi({
+        nombre: fields.nombre.trim(),
+        apellido: fields.apellido.trim(),
+        telefono: telefonoDigits || null,
+        codigoPais: telefonoDigits ? selectedCountry.code : null,
+      });
+
+      updateUser(updated);
+      setFields((current) => ({
+        ...current,
+        nombre: updated.nombre,
+        apellido: updated.apellido ?? '',
+        telefono: formatPhoneDisplay(updated.telefono),
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      }));
+      setCountryId(findCountryIdByCode(updated.codigoPais));
+      setSaveMessage('Cambios guardados correctamente.');
+    } catch (error) {
+      setLoadError(getApiErrorMessage(error, 'No se pudieron guardar los cambios.'));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const avatarLetter = (fields.nombre.trim() || user?.nombre?.trim() || 'U').charAt(0).toUpperCase();
@@ -139,6 +221,12 @@ export const PerfilPage = () => {
         <h1 id="profile-page-title">Configuración de perfil</h1>
         <p>Administra tu información personal y seguridad de tu cuenta.</p>
       </header>
+
+      {loadError && (
+        <p className="profile-load-error" role="alert">
+          {loadError}
+        </p>
+      )}
 
       <form className="profile-card" onSubmit={handleSubmit} noValidate>
         <section className="profile-photo-section" aria-label="Foto de perfil">
@@ -163,11 +251,21 @@ export const PerfilPage = () => {
           <div className="profile-fields-grid">
             <label className="profile-field">
               <span>Nombre</span>
-              <input value={fields.nombre} onChange={(event) => updateField('nombre', event.target.value)} autoComplete="given-name" />
+              <input
+                value={fields.nombre}
+                onChange={(event) => updateField('nombre', event.target.value)}
+                autoComplete="given-name"
+                disabled={isLoadingProfile || isSaving}
+              />
             </label>
             <label className="profile-field">
               <span>Apellido</span>
-              <input value={fields.apellido} onChange={(event) => updateField('apellido', event.target.value)} autoComplete="family-name" />
+              <input
+                value={fields.apellido}
+                onChange={(event) => updateField('apellido', event.target.value)}
+                autoComplete="family-name"
+                disabled={isLoadingProfile || isSaving}
+              />
             </label>
             <label className="profile-field">
               <span>Correo</span>
@@ -176,12 +274,28 @@ export const PerfilPage = () => {
             <label className="profile-field">
               <span>Teléfono</span>
               <div className="profile-phone-input">
-                <select value={countryCode} onChange={(event) => setCountryCode(event.target.value)} aria-label="Código de país">
-                  {countries.map((country) => (
-                    <option key={`${country.label}-${country.code}`} value={country.code}>{country.label} {country.code}</option>
-                  ))}
-                </select>
-                <input value={fields.telefono} onChange={(event) => updateField('telefono', event.target.value)} autoComplete="tel" inputMode="tel" placeholder="300 123 4567" />
+                <div className="profile-phone-country">
+                  <select
+                    value={countryId}
+                    onChange={handleCountryChange}
+                    aria-label="Código de país"
+                    disabled={isLoadingProfile || isSaving}
+                  >
+                    {countries.map((country) => (
+                      <option key={country.id} value={country.id}>
+                        {country.label} {country.code}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <input
+                  value={fields.telefono}
+                  onChange={(event) => updateField('telefono', event.target.value)}
+                  autoComplete="tel"
+                  inputMode="tel"
+                  placeholder="300 123 4567"
+                  disabled={isLoadingProfile || isSaving}
+                />
               </div>
             </label>
           </div>
@@ -222,7 +336,9 @@ export const PerfilPage = () => {
             <p>Asegúrate de guardar los cambios antes de salir.</p>
             {saveMessage && <span className="profile-save-message" role="status">{saveMessage}</span>}
           </div>
-          <button className="profile-save-button" type="submit">Guardar cambios</button>
+          <button className="profile-save-button" type="submit" disabled={isLoadingProfile || isSaving}>
+            {isSaving ? 'Guardando…' : 'Guardar cambios'}
+          </button>
         </footer>
       </form>
     </section>

@@ -132,27 +132,80 @@
 .profile-password-input {
   display: flex;
   position: relative;
+  align-items: stretch;
 }
 
-.profile-phone-input select {
-  width: 116px;
-  flex: 0 0 116px;
-  padding: 10px 8px;
+.profile-phone-input {
   border: 1px solid rgba(34, 211, 238, 0.12);
-  border-right: 0;
-  border-radius: 8px 0 0 8px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #0b1426;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.profile-phone-input:focus-within {
+  border-color: #00e676;
+  box-shadow: 0 0 0 3px rgba(0, 230, 118, 0.1);
+}
+
+.profile-phone-country {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 152px;
+  max-width: 190px;
+}
+
+.profile-phone-country select {
+  width: 100%;
+  height: 100%;
+  min-height: 42px;
+  padding: 10px 34px 10px 12px;
+  border: 0;
+  border-right: 1px solid rgba(34, 211, 238, 0.12);
+  border-radius: 0;
   outline: none;
+  appearance: none;
   background: #101b2d;
   color: #f8fafc;
   font: inherit;
+  cursor: pointer;
+}
+
+.profile-phone-country::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid #94a3b8;
+  border-bottom: 2px solid #94a3b8;
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
 }
 
 .profile-phone-input input {
-  border-radius: 0 8px 8px 0;
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
-.profile-phone-input select:focus {
-  border-color: #00e676;
+.profile-phone-input input:focus {
+  box-shadow: none;
+}
+
+.profile-phone-country select:disabled,
+.profile-phone-input input:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.profile-load-error {
+  margin: 18px 0 0;
+  color: #fca5a5;
+  font-size: 14px;
 }
 
 .profile-password-input input {
