@@ -337,6 +337,11 @@ export const ManageCoursesPage = ({
     const currentStatus = normalizeCourseStatus(course.estado);
     const nextStatus = currentStatus === 'publicado' ? 'borrador' : 'publicado';
 
+    if (nextStatus === 'publicado' && isAdminVariant) {
+      setLoadError('Solo el instructor asignado puede publicar el curso.');
+      return;
+    }
+
     if (nextStatus === 'publicado') {
       let lessonCount =
         selectedCourseId === course.id ? lessons.length : null;
@@ -842,13 +847,16 @@ export const ManageCoursesPage = ({
                     disabled={
                       statusUpdatingId === selectedCourse.id ||
                       (normalizeCourseStatus(selectedCourse.estado) !== 'publicado' &&
-                        !canPublishSelected)
+                        (!canPublishSelected || isAdminVariant))
                     }
                     title={
-                      !canPublishSelected &&
+                      isAdminVariant &&
                       normalizeCourseStatus(selectedCourse.estado) !== 'publicado'
-                        ? 'Añade al menos una lección para publicar'
-                        : undefined
+                        ? 'Solo el instructor asignado puede publicar el curso'
+                        : !canPublishSelected &&
+                            normalizeCourseStatus(selectedCourse.estado) !== 'publicado'
+                          ? 'Añade al menos una lección para publicar'
+                          : undefined
                     }
                     onClick={() => void handleToggleStatus(selectedCourse)}
                   >
