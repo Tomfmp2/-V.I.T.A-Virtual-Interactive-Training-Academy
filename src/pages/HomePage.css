@@ -155,6 +155,13 @@
   font-size: 0.875rem;
   font-weight: 700;
   line-height: 1;
+  overflow: hidden;
+}
+
+.user-menu-avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 

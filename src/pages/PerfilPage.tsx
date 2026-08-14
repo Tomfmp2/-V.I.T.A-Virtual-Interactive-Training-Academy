@@ -1,8 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
-import { getMeApi, updateProfileApi } from '../api/authApi';
+import {
+  changePasswordApi,
+  getMeApi,
+  updateProfileApi,
+  uploadProfilePhotoApi,
+} from '../api/authApi';
 import { useAuth } from '../context/useAuth';
 import { getApiErrorMessage } from '../utils/apiErrors';
+import { getProfilePhotoUrl } from '../utils/profilePhoto';
 import './PerfilPage.css';
 
 type ProfileFields = {
@@ -62,9 +68,10 @@ const EyeIcon = ({ isVisible }: { isVisible: boolean }) => (
 );
 
 export const PerfilPage = () => {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, photoVersion } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [pendingPhoto, setPendingPhoto] = useState<File | null>(null);
   const [errors, setErrors] = useState<FormErrors>({});
   const [saveMessage, setSaveMessage] = useState('');
   const [loadError, setLoadError] = useState('');
@@ -147,6 +154,9 @@ export const PerfilPage = () => {
     const photo = event.target.files?.[0];
     if (!photo) return;
 
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+
+    setPendingPhoto(photo);
     setPhotoPreview(URL.createObjectURL(photo));
     setSaveMessage('');
   };
@@ -158,9 +168,25 @@ export const PerfilPage = () => {
       fields.currentPassword || fields.newPassword || fields.confirmPassword,
     );
 
+    if (!fields.nombre.trim()) {
+      nextErrors.nombre = 'Ingresa tu nombre.';
+    } else if (fields.nombre.trim().length < 3) {
+      nextErrors.nombre = 'El nombre debe tener al menos 3 caracteres.';
+    }
+
+    if (!fields.apellido.trim()) {
+      nextErrors.apellido = 'Ingresa tu apellido.';
+    } else if (fields.apellido.trim().length < 3) {
+      nextErrors.apellido = 'El apellido debe tener al menos 3 caracteres.';
+    }
+
     if (isChangingPassword) {
       if (!fields.currentPassword) nextErrors.currentPassword = 'Ingresa tu contraseña actual.';
-      if (!fields.newPassword) nextErrors.newPassword = 'Ingresa una nueva contraseña.';
+      if (!fields.newPassword) {
+        nextErrors.newPassword = 'Ingresa una nueva contraseña.';
+      } else if (fields.newPassword.length < 8) {
+        nextErrors.newPassword = 'La contraseña debe tener al menos 8 caracteres.';
+      }
       if (!fields.confirmPassword) nextErrors.confirmPassword = 'Confirma tu nueva contraseña.';
       if (fields.newPassword && fields.confirmPassword && fields.newPassword !== fields.confirmPassword) {
         nextErrors.confirmPassword = 'Las contraseñas no coinciden.';
@@ -172,17 +198,37 @@ export const PerfilPage = () => {
       return;
     }
 
-    if (isChangingPassword) {
-      setLoadError('El cambio de contraseña estará disponible pronto.');
-      return;
-    }
-
     setIsSaving(true);
     setErrors({});
     setSaveMessage('');
     setLoadError('');
 
     try {
+      // La contraseña va primero: si la actual es incorrecta no se aplica
+      // ningún otro cambio y el usuario recibe un error concreto.
+      if (isChangingPassword) {
+        await changePasswordApi({
+          'contraseñaActual': fields.currentPassword,
+          'nuevaContraseña': fields.newPassword,
+          'confirmarContraseña': fields.confirmPassword,
+        });
+      }
+
+      let fotoUrl = user?.fotoUrl ?? null;
+
+      if (pendingPhoto) {
+        const uploaded = await uploadProfilePhotoApi(pendingPhoto);
+        fotoUrl = uploaded.fotoUrl;
+        if (user) {
+          updateUser({ ...user, fotoUrl });
+        }
+        setPendingPhoto(null);
+        if (photoPreview) {
+          URL.revokeObjectURL(photoPreview);
+          setPhotoPreview(null);
+        }
+      }
+
       const telefonoDigits = fields.telefono.replace(/\D/g, '');
       const updated = await updateProfileApi({
         nombre: fields.nombre.trim(),
@@ -191,7 +237,7 @@ export const PerfilPage = () => {
         codigoPais: telefonoDigits ? selectedCountry.code : null,
       });
 
-      updateUser(updated);
+      updateUser({ ...updated, fotoUrl: updated.fotoUrl ?? fotoUrl });
       setFields((current) => ({
         ...current,
         nombre: updated.nombre,
@@ -202,7 +248,11 @@ export const PerfilPage = () => {
         confirmPassword: '',
       }));
       setCountryId(findCountryIdByCode(updated.codigoPais));
-      setSaveMessage('Cambios guardados correctamente.');
+      setSaveMessage(
+        isChangingPassword
+          ? 'Cambios guardados y contraseña actualizada.'
+          : 'Cambios guardados correctamente.',
+      );
     } catch (error) {
       setLoadError(getApiErrorMessage(error, 'No se pudieron guardar los cambios.'));
     } finally {
@@ -211,6 +261,7 @@ export const PerfilPage = () => {
   };
 
   const avatarLetter = (fields.nombre.trim() || user?.nombre?.trim() || 'U').charAt(0).toUpperCase();
+  const profilePhotoSrc = photoPreview ?? getProfilePhotoUrl(user?.fotoUrl, photoVersion);
   const togglePasswordVisibility = (field: 'currentPassword' | 'newPassword' | 'confirmPassword') => {
     setVisiblePasswords((current) => ({ ...current, [field]: !current[field] }));
   };
@@ -230,8 +281,8 @@ export const PerfilPage = () => {
 
       <form className="profile-card" onSubmit={handleSubmit} noValidate>
         <section className="profile-photo-section" aria-label="Foto de perfil">
-          {photoPreview ? (
-            <img className="profile-avatar" src={photoPreview} alt="Vista previa de la foto de perfil" />
+          {profilePhotoSrc ? (
+            <img className="profile-avatar" src={profilePhotoSrc} alt="Foto de perfil" />
           ) : (
             <div className="profile-avatar profile-avatar-fallback" aria-label={`Avatar de ${fields.nombre || 'usuario'}`}>
               {avatarLetter}
@@ -255,8 +306,10 @@ export const PerfilPage = () => {
                 value={fields.nombre}
                 onChange={(event) => updateField('nombre', event.target.value)}
                 autoComplete="given-name"
+                aria-invalid={Boolean(errors.nombre)}
                 disabled={isLoadingProfile || isSaving}
               />
+              {errors.nombre && <small className="profile-field-error">{errors.nombre}</small>}
             </label>
             <label className="profile-field">
               <span>Apellido</span>
@@ -264,8 +317,10 @@ export const PerfilPage = () => {
                 value={fields.apellido}
                 onChange={(event) => updateField('apellido', event.target.value)}
                 autoComplete="family-name"
+                aria-invalid={Boolean(errors.apellido)}
                 disabled={isLoadingProfile || isSaving}
               />
+              {errors.apellido && <small className="profile-field-error">{errors.apellido}</small>}
             </label>
             <label className="profile-field">
               <span>Correo</span>

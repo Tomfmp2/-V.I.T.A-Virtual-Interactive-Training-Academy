@@ -12,8 +12,9 @@ import { ReportsPage } from './domain/ReportsPage';
 import { StudentDashboard } from './dashboard/StudentDashboard';
 import { InstructorDashboard } from './dashboard/InstructorDashboard';
 import { AdminDashboard } from './dashboard/AdminDashboard';
-import { logoutApi } from '../api/authApi';
+import { getMeApi, logoutApi } from '../api/authApi';
 import { normalizePlatformRole } from '../utils/coursePermissions';
+import { getProfilePhotoUrl } from '../utils/profilePhoto';
 import { getRoleAreaLabel, getRoleNavItems } from '../utils/roleNavigation';
 import './HomePage.css';
 
@@ -225,7 +226,7 @@ const Icon = ({ name, size = 18 }: IconProps) => {
 };
 
 export const HomePage = () => {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, photoVersion, updateUser } = useAuth();
   const navigate = useNavigate();
   const platformRole = normalizePlatformRole(user?.rol);
 
@@ -242,6 +243,8 @@ export const HomePage = () => {
     .join(' ') || 'Usuario';
   const displayEmail = user?.email?.trim() || 'Correo no disponible';
   const displayRole = user?.rol?.trim() || 'No especificado';
+  const profilePhotoUrl = getProfilePhotoUrl(user?.fotoUrl, photoVersion);
+  const avatarInitial = displayName.charAt(0).toUpperCase();
   const navItems = getRoleNavItems(user?.rol);
   const areaLabel = getRoleAreaLabel(user?.rol);
 
@@ -250,6 +253,24 @@ export const HomePage = () => {
       navigate('/login');
     }
   }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    let cancelled = false;
+
+    // El perfil completo (foto, teléfono) no se guarda en localStorage:
+    // se relee del servidor al entrar al panel.
+    getMeApi()
+      .then((profile) => {
+        if (!cancelled) updateUser(profile);
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, updateUser]);
 
   useEffect(() => {
     const closeUserMenu = (event: MouseEvent) => {
@@ -475,7 +496,11 @@ export const HomePage = () => {
               >
                 <span className="user-menu-name-desktop">{displayName}</span>
                 <span className="user-menu-avatar" aria-hidden="true">
-                  {displayName.charAt(0).toUpperCase()}
+                  {profilePhotoUrl ? (
+                    <img className="user-menu-avatar-image" src={profilePhotoUrl} alt="" />
+                  ) : (
+                    avatarInitial
+                  )}
                 </span>
               </button>
 

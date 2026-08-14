@@ -5,6 +5,7 @@ export interface AuthContextType {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
+  photoVersion: number;
   login: (token: string, user: User) => void;
   updateUser: (user: User) => void;
   logout: () => void;

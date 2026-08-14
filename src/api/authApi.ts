@@ -1,5 +1,12 @@
 import api from './http';
-import type { User, LoginRequest, LoginResponse, RegisterRequest, UpdateProfileRequest } from '../types/auth';
+import type {
+  User,
+  ChangePasswordRequest,
+  LoginRequest,
+  LoginResponse,
+  RegisterRequest,
+  UpdateProfileRequest,
+} from '../types/auth';
 
 export const loginApi = async (credentials: LoginRequest): Promise<LoginResponse> => {
   const response = await api.post<LoginResponse>('/auth/login', credentials);
@@ -24,6 +31,30 @@ export const getMeApi = async (): Promise<User> => {
  */
 export const updateProfileApi = async (payload: UpdateProfileRequest): Promise<User> => {
   const response = await api.put<User>('/auth/me', payload);
+  return response.data;
+};
+
+/**
+ * Sube la foto de perfil del usuario autenticado (/api/auth/me/photo)
+ */
+export const uploadProfilePhotoApi = async (file: File): Promise<{ fotoUrl: string }> => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await api.post<{ fotoUrl: string }>('/auth/me/photo', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+
+  return response.data;
+};
+
+/**
+ * Cambia la contraseña del usuario autenticado (/api/auth/change-password)
+ */
+export const changePasswordApi = async (
+  payload: ChangePasswordRequest,
+): Promise<{ message: string }> => {
+  const response = await api.post<{ message: string }>('/auth/change-password', payload);
   return response.data;
 };
 

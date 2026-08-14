@@ -17,6 +17,13 @@ export interface UpdateProfileRequest {
   codigoPais?: string | null;
 }
 
+/** Las claves llevan "ñ" porque así las expone el contrato del backend. */
+export interface ChangePasswordRequest {
+  'contraseñaActual': string;
+  'nuevaContraseña': string;
+  'confirmarContraseña': string;
+}
+
 export interface LoginRequest {
   email: string;
   password: string;
