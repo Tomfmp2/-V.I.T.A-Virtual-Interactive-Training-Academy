@@ -296,6 +296,26 @@ export const HomePage = () => {
     }
   };
 
+  const handleHeaderSearchChange = (value: string) => {
+    setSearchTerm(value);
+
+    if (!value.trim()) return;
+    if (active !== 'dashboard') return;
+
+    if (platformRole === 'estudiante') {
+      handleNavClick('explore');
+      return;
+    }
+    if (platformRole === 'instructor' || platformRole === 'admin') {
+      handleNavClick('my-courses');
+    }
+  };
+
+  const searchPlaceholder =
+    platformRole === 'estudiante'
+      ? 'Buscar en catálogo o mis cursos…'
+      : 'Buscar cursos…';
+
   const renderMainContent = () => {
     if (active === 'categories') return <CategoriesPage />;
     if (active === 'settings') return <PerfilPage />;
@@ -303,24 +323,40 @@ export const HomePage = () => {
       return (
         <ExploreCoursesPage
           mode={platformRole === 'estudiante' ? 'enroll' : 'browse'}
+          searchTerm={searchTerm}
+          onSearchTermChange={setSearchTerm}
         />
       );
     }
     if (active === 'users') return <UsersPage />;
     if (active === 'reports') return <ReportsPage />;
     if (active === 'my-courses') {
-      if (platformRole === 'estudiante') return <MyEnrollmentsPage />;
+      if (platformRole === 'estudiante') {
+        return (
+          <MyEnrollmentsPage
+            searchTerm={searchTerm}
+            onSearchTermChange={setSearchTerm}
+          />
+        );
+      }
       if (platformRole === 'instructor') {
         return (
           <ManageCoursesPage
             variant="instructor"
             initialOpenCreate={openCreateCourse}
+            searchTerm={searchTerm}
+            onSearchTermChange={setSearchTerm}
           />
         );
       }
       if (platformRole === 'admin') {
         return (
-          <ManageCoursesPage variant="admin" initialOpenCreate={openCreateCourse} />
+          <ManageCoursesPage
+            variant="admin"
+            initialOpenCreate={openCreateCourse}
+            searchTerm={searchTerm}
+            onSearchTermChange={setSearchTerm}
+          />
         );
       }
     }
@@ -411,10 +447,15 @@ export const HomePage = () => {
           <div className="header-search">
             <input
               type="search"
-              placeholder="Buscar cursos..."
+              placeholder={searchPlaceholder}
               aria-label="Buscar cursos"
               value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
+              onChange={(event) => handleHeaderSearchChange(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter' || !searchTerm.trim()) return;
+                if (platformRole === 'estudiante') handleNavClick('explore');
+                else handleNavClick('my-courses');
+              }}
             />
           </div>
 

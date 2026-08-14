@@ -2,43 +2,49 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getCoursesApi } from '../../api/coursesApi';
 import { enrollApi } from '../../api/enrollmentsApi';
 import { resolveEnrollmentError } from '../../utils/apiErrors';
+import { matchesCourseSearch } from '../../utils/courseSearch';
 import type { CourseListItem } from '../../types/course';
 import './DomainShared.css';
 
 export interface ExploreCoursesPageProps {
   mode?: 'enroll' | 'browse';
+  searchTerm?: string;
+  onSearchTermChange?: (value: string) => void;
 }
 
 const isPublishedCourse = (course: CourseListItem): boolean =>
   course.estado.trim().toLowerCase() === 'publicado';
 
-export const ExploreCoursesPage = ({ mode = 'enroll' }: ExploreCoursesPageProps) => {
+export const ExploreCoursesPage = ({
+  mode = 'enroll',
+  searchTerm: externalSearch,
+  onSearchTermChange,
+}: ExploreCoursesPageProps) => {
   const [courses, setCourses] = useState<CourseListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [feedback, setFeedback] = useState('');
   const [enrollingCourseId, setEnrollingCourseId] = useState<number | null>(null);
   const [enrollErrors, setEnrollErrors] = useState<Record<number, string>>({});
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(externalSearch ?? '');
+
+  useEffect(() => {
+    if (externalSearch !== undefined) {
+      setSearchTerm(externalSearch);
+    }
+  }, [externalSearch]);
 
   const publishedCourses = useMemo(() => courses.filter(isPublishedCourse), [courses]);
 
-  const filteredCourses = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
-    if (!term) return publishedCourses;
-    return publishedCourses.filter((course) => {
-      const haystack = [
-        course.titulo,
-        course.categoriaNombre,
-        course.nivelNombre,
-        course.instructorNombre,
-        course.descripcionCorta ?? '',
-      ]
-        .join(' ')
-        .toLowerCase();
-      return haystack.includes(term);
-    });
-  }, [publishedCourses, searchTerm]);
+  const filteredCourses = useMemo(
+    () => publishedCourses.filter((course) => matchesCourseSearch(course, searchTerm)),
+    [publishedCourses, searchTerm],
+  );
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    onSearchTermChange?.(value);
+  };
 
   const loadCourses = useCallback(async () => {
     setIsLoading(true);
@@ -107,7 +113,7 @@ export const ExploreCoursesPage = ({ mode = 'enroll' }: ExploreCoursesPageProps)
           <input
             type="search"
             value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
+            onChange={(event) => handleSearchChange(event.target.value)}
             placeholder="Título, categoría, nivel o instructor"
             aria-label="Buscar cursos"
           />

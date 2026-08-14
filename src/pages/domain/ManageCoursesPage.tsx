@@ -20,6 +20,7 @@ import {
 import { getUsersApi } from '../../api/usersApi';
 import { LessonListPanel } from '../../components/domain/LessonListPanel';
 import { getApiErrorMessage } from '../../utils/apiErrors';
+import { matchesCourseSearch } from '../../utils/courseSearch';
 import { isAdminRole, normalizePlatformRole } from '../../utils/coursePermissions';
 import type { Category } from '../../types/category';
 import type {
@@ -38,6 +39,8 @@ export interface ManageCoursesPageProps {
   variant: 'instructor' | 'admin';
   /** Si viene desde el dashboard, abre el form de nuevo curso al montar */
   initialOpenCreate?: boolean;
+  searchTerm?: string;
+  onSearchTermChange?: (value: string) => void;
 }
 
 type CourseFormState = {
@@ -74,6 +77,8 @@ const nextLessonOrden = (lessons: Lesson[]): number =>
 export const ManageCoursesPage = ({
   variant,
   initialOpenCreate = false,
+  searchTerm = '',
+  onSearchTermChange,
 }: ManageCoursesPageProps) => {
   const { user } = useAuth();
   const platformRole = normalizePlatformRole(user?.rol);
@@ -89,6 +94,7 @@ export const ManageCoursesPage = ({
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [statusFilter, setStatusFilter] = useState<'all' | 'publicado' | 'borrador'>('all');
+  const [localSearch, setLocalSearch] = useState(searchTerm);
 
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -118,11 +124,18 @@ export const ManageCoursesPage = ({
   );
 
   const filteredCourses = useMemo(() => {
-    if (statusFilter === 'all') return courses;
-    return courses.filter(
-      (course) => normalizeCourseStatus(course.estado) === statusFilter,
-    );
-  }, [courses, statusFilter]);
+    const byStatus =
+      statusFilter === 'all'
+        ? courses
+        : courses.filter((course) => normalizeCourseStatus(course.estado) === statusFilter);
+
+    return byStatus.filter((course) => matchesCourseSearch(course, localSearch));
+  }, [courses, statusFilter, localSearch]);
+
+  const handleCourseSearchChange = (value: string) => {
+    setLocalSearch(value);
+    onSearchTermChange?.(value);
+  };
 
   const publishedCount = useMemo(
     () => courses.filter((course) => normalizeCourseStatus(course.estado) === 'publicado').length,
@@ -186,6 +199,10 @@ export const ManageCoursesPage = ({
     void loadCourses();
     void loadCatalogData();
   }, [loadCourses, loadCatalogData]);
+
+  useEffect(() => {
+    setLocalSearch(searchTerm);
+  }, [searchTerm]);
 
   useEffect(() => {
     if (selectedCourseId == null) {
@@ -618,8 +635,21 @@ export const ManageCoursesPage = ({
               <strong>Cursos</strong>
               <span>{filteredCourses.length}</span>
             </div>
+            <div className="manage-list-search">
+              <input
+                type="search"
+                value={localSearch}
+                onChange={(event) => handleCourseSearchChange(event.target.value)}
+                placeholder="Buscar por título, categoría…"
+                aria-label="Buscar en mis cursos"
+              />
+            </div>
             {filteredCourses.length === 0 ? (
-              <p className="domain-state">No hay cursos en este filtro.</p>
+              <p className="domain-state">
+                {localSearch.trim()
+                  ? `Sin resultados para “${localSearch.trim()}”.`
+                  : 'No hay cursos en este filtro.'}
+              </p>
             ) : (
               <ul className="manage-course-list">
                 {filteredCourses.map((course) => {
