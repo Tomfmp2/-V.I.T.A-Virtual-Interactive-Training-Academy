@@ -4,7 +4,15 @@ import { useAuth } from '../context/AuthContext';
 import BrandLogo from '../components/BrandLogo';
 import { PerfilPage } from './PerfilPage';
 import { CategoriesPage } from './admin/CategoriesPage';
-import { getCoursePermissions } from '../utils/coursePermissions';
+import { ExploreCoursesPage } from './domain/ExploreCoursesPage';
+import { MyEnrollmentsPage } from './domain/MyEnrollmentsPage';
+import { ManageCoursesPage } from './domain/ManageCoursesPage';
+import { UsersPage } from './domain/UsersPage';
+import { ReportsPage } from './domain/ReportsPage';
+import { logoutApi } from '../api/authApi';
+import { getMyEnrollmentsApi } from '../api/enrollmentsApi';
+import { getMyCoursesApi, getCoursesApi } from '../api/coursesApi';
+import { getCoursePermissions, normalizePlatformRole } from '../utils/coursePermissions';
 import { getRoleAreaLabel, getRoleNavItems } from '../utils/roleNavigation';
 import './HomePage.css';
 
@@ -12,9 +20,9 @@ type IconName =
   | 'dashboard'
   | 'courses'
   | 'explore'
-  | 'certificate'
   | 'users'
   | 'categories'
+  | 'reports'
   | 'settings'
   | 'logout'
   | 'search'
@@ -22,7 +30,8 @@ type IconName =
   | 'book'
   | 'award'
   | 'clock'
-  | 'arrow';
+  | 'arrow'
+  | 'menu';
 
 interface IconProps {
   name: IconName;
@@ -79,17 +88,23 @@ const Icon = ({ name, size = 18 }: IconProps) => {
         </svg>
       );
 
-    case 'certificate':
+    case 'reports':
       return (
         <svg {...commonProps}>
-          <circle cx="12" cy="9" r="5.5" stroke="currentColor" strokeWidth="1.8" />
-          <path
-            d="M9.5 14L8.5 21L12 19L15.5 21L14.5 14"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinejoin="round"
-          />
-          <path d="M9.5 9L11 10.5L14.5 7.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M4 19V5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M4 19H20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M8 15V11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M12 15V8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M16 15V10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      );
+
+    case 'menu':
+      return (
+        <svg {...commonProps}>
+          <path d="M4 7H20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M4 12H20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M4 17H20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
         </svg>
       );
 
@@ -211,11 +226,14 @@ const Icon = ({ name, size = 18 }: IconProps) => {
 export const HomePage = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const platformRole = normalizePlatformRole(user?.rol);
 
   const [active, setActive] = useState('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [courseAccessMessage, setCourseAccessMessage] = useState('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [dashboardCount, setDashboardCount] = useState(0);
+  const [dashboardLoading, setDashboardLoading] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const userWithLastName = user as (typeof user & { apellido?: string }) | null;
@@ -228,8 +246,6 @@ export const HomePage = () => {
   const navItems = getRoleNavItems(user?.rol);
   const areaLabel = getRoleAreaLabel(user?.rol);
 
-  // Protege el Dashboard.
-  // Si no existe una sesión activa, vuelve a Login.
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
@@ -246,6 +262,7 @@ export const HomePage = () => {
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setIsUserMenuOpen(false);
+        setIsSidebarOpen(false);
       }
     };
 
@@ -258,507 +275,261 @@ export const HomePage = () => {
     };
   }, []);
 
-  const handleLogout = () => {
+  useEffect(() => {
+    if (active !== 'dashboard' || !isAuthenticated) return;
+
+    let cancelled = false;
+    const loadStats = async () => {
+      setDashboardLoading(true);
+      try {
+        if (platformRole === 'estudiante') {
+          const list = await getMyEnrollmentsApi();
+          if (!cancelled) setDashboardCount(list.length);
+        } else if (platformRole === 'instructor') {
+          const list = await getMyCoursesApi();
+          if (!cancelled) setDashboardCount(list.length);
+        } else if (platformRole === 'admin') {
+          const list = await getCoursesApi();
+          if (!cancelled) setDashboardCount(list.length);
+        } else if (!cancelled) {
+          setDashboardCount(0);
+        }
+      } catch {
+        if (!cancelled) setDashboardCount(0);
+      } finally {
+        if (!cancelled) setDashboardLoading(false);
+      }
+    };
+
+    void loadStats();
+    return () => {
+      cancelled = true;
+    };
+  }, [active, isAuthenticated, platformRole]);
+
+  const handleLogout = async () => {
+    try {
+      await logoutApi();
+    } catch {
+      // Logout stateless: limpiar sesión local aunque falle la red.
+    }
     logout();
     navigate('/login');
   };
 
-  const stats = {
-    inProgress: 3,
-    certificates: 2,
-    hours: 47,
+  const handleNavClick = (itemId: string) => {
+    setActive(itemId);
+    setIsSidebarOpen(false);
+    if (itemId === 'dashboard' || itemId === 'my-courses') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
-  const courses = [
-    {
-      id: 'c1',
-      category: 'DESARROLLO',
-      title: 'Desarrollo Web Fullstack',
-      teacher: 'Carlos Rodríguez',
-      progress: 75,
-      image: '/src/assets/imagen-fondo-1.jpg',
-    },
-    {
-      id: 'c2',
-      category: 'DESARROLLO',
-      title: 'Diseño de Interfaces UX/UI',
-      teacher: 'Sofía Martínez',
-      progress: 40,
-      image: '/src/assets/imagen-fondo-1.jpg',
-    },
-    {
-      id: 'c3',
-      category: 'DESARROLLO',
-      title: 'Introducción a Data Science',
-      teacher: 'Luis Ramírez',
-      progress: 15,
-      image: '/src/assets/imagen-fondo-1.jpg',
-    },
-  ];
+  const renderMainContent = () => {
+    if (active === 'categories') return <CategoriesPage />;
+    if (active === 'settings') return <PerfilPage />;
+    if (active === 'explore') {
+      return (
+        <ExploreCoursesPage
+          mode={platformRole === 'estudiante' ? 'enroll' : 'browse'}
+        />
+      );
+    }
+    if (active === 'users') return <UsersPage />;
+    if (active === 'reports') return <ReportsPage />;
+    if (active === 'my-courses') {
+      if (platformRole === 'estudiante') return <MyEnrollmentsPage />;
+      if (platformRole === 'instructor') return <ManageCoursesPage variant="instructor" />;
+      if (platformRole === 'admin') return <ManageCoursesPage variant="admin" />;
+    }
 
-  const filteredCourses = courses.filter((course) => {
-    const search = searchTerm.toLowerCase().trim();
-
-    if (!search) return true;
+    const statLabel =
+      platformRole === 'estudiante'
+        ? 'Mis inscripciones'
+        : platformRole === 'instructor'
+          ? 'Mis cursos'
+          : 'Cursos en la plataforma';
 
     return (
-      course.title.toLowerCase().includes(search) ||
-      course.category.toLowerCase().includes(search) ||
-      course.teacher.toLowerCase().includes(search)
+      <>
+        <section className="greeting">
+          <h1>¡Hola, {user?.nombre || 'Usuario'}!</h1>
+          <p className="greeting-sub">
+            {areaLabel} · Resumen de tu actividad en VITA.
+          </p>
+        </section>
+
+        <section className="stats-row">
+          <div className="stat-card">
+            <div className="stat-icon">
+              <Icon name="book" size={18} />
+            </div>
+            <div className="stat-content">
+              <div className="stat-meta">{statLabel}</div>
+              <div className="stat-value">{dashboardLoading ? '…' : dashboardCount}</div>
+            </div>
+          </div>
+        </section>
+
+        <section id="continuar-aprendiendo" className="continue-section">
+          <div className="section-heading">
+            <h3>Accesos rápidos</h3>
+          </div>
+          <div className="quick-actions">
+            {platformRole === 'estudiante' && (
+              <>
+                <button type="button" className="continue-btn" onClick={() => handleNavClick('explore')}>
+                  Explorar cursos
+                </button>
+                <button type="button" className="continue-btn" onClick={() => handleNavClick('my-courses')}>
+                  Ver mis cursos
+                </button>
+              </>
+            )}
+            {(platformRole === 'instructor' || platformRole === 'admin') && (
+              <button type="button" className="continue-btn" onClick={() => handleNavClick('my-courses')}>
+                Gestionar cursos
+              </button>
+            )}
+            {platformRole === 'admin' && (
+              <button type="button" className="continue-btn" onClick={() => handleNavClick('reports')}>
+                Ver reportes
+              </button>
+            )}
+          </div>
+          {!coursePermissions.viewCourse && (
+            <div className="no-courses" role="alert">
+              <strong>Acceso no permitido</strong>
+              <span>No tienes permisos para realizar esta acción.</span>
+            </div>
+          )}
+        </section>
+      </>
     );
-  });
-
-  const handleContinue = (courseId: string) => {
-    if (!coursePermissions.enterCourse) {
-      setCourseAccessMessage('No tienes permisos para realizar esta acción.');
-      return;
-    }
-
-    setCourseAccessMessage('');
-    console.log('Continuar curso:', courseId);
-
-    // Mantiene la ruta actual existente.
-    // Cuando exista una ruta específica de curso,
-    // puede sustituirse por esa ruta.
-    navigate('/home');
-  };
-
-  const scrollToTop = () => {
-    setActive('dashboard');
-
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
-  };
-
-  const scrollToCourses = () => {
-    setActive('my-courses');
-
-    // El contenido del dashboard puede no estar montado si venimos de otra área.
-    requestAnimationFrame(() => {
-      document
-        .getElementById('continuar-aprendiendo')
-        ?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start',
-        });
-    });
-  };
-
-  // Áreas declaradas en el menú que todavía no tienen pantalla de negocio (M10+).
-  const areaPlaceholders: Record<string, { title: string; description: string }> = {
-    explore: {
-      title: 'Explorar catálogo',
-      description: 'Área disponible para tu rol. El catálogo completo llega en el siguiente módulo.',
-    },
-    certs: {
-      title: 'Certificados',
-      description: 'Área disponible para tu rol. La emisión de certificados llega en el siguiente módulo.',
-    },
-    users: {
-      title: 'Gestión de usuarios',
-      description: 'Área exclusiva de administración. La gestión completa llega en el siguiente módulo.',
-    },
-  };
-
-  const areaPlaceholder = areaPlaceholders[active];
-
-  const handleNavClick = (itemId: string) => {
-    if (itemId === 'dashboard') {
-      scrollToTop();
-      return;
-    }
-
-    if (itemId === 'my-courses') {
-      scrollToCourses();
-      return;
-    }
-
-    setActive(itemId);
   };
 
   return (
-    <div className="home-container dashboard-root">
+    <div className={`home-container dashboard-root ${isSidebarOpen ? 'sidebar-open' : ''}`}>
+      {isSidebarOpen && (
+        <button
+          type="button"
+          className="sidebar-overlay"
+          aria-label="Cerrar menú"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
 
-      {/* =========================================
-          SIDEBAR
-      ========================================== */}
-      <aside className="sidebar">
-
+      <aside
+        id="dashboard-sidebar"
+        className={`sidebar ${isSidebarOpen ? 'is-open' : ''}`}
+      >
         <div className="sidebar-top">
           <BrandLogo />
-        
-
-        <p className="sidebar-area" aria-label="Área asignada">
-          {areaLabel}
-        </p>
-
-        <nav className="sidebar-nav" aria-label="Menú por rol">
-
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className={`nav-item ${active === item.id ? 'active' : ''}`}
-              aria-current={active === item.id ? 'page' : undefined}
-              onClick={() => handleNavClick(item.id)}
-            >
-              <span className="nav-icon">
-                <Icon name={item.icon} size={17} />
-              </span>
-
-              <span className="nav-label">
-                {item.label}
-              </span>
-            </button>
-          ))}
-
-        </nav>
+          <p className="sidebar-area" aria-label="Área asignada">
+            {areaLabel}
+          </p>
+          <nav className="sidebar-nav" aria-label="Menú por rol">
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={`nav-item ${active === item.id ? 'active' : ''}`}
+                aria-current={active === item.id ? 'page' : undefined}
+                onClick={() => handleNavClick(item.id)}
+              >
+                <span className="nav-icon">
+                  <Icon name={item.icon} size={17} />
+                </span>
+                <span className="nav-label">{item.label}</span>
+              </button>
+            ))}
+          </nav>
         </div>
 
         <div className="sidebar-bottom">
-
           <button
             type="button"
             className="nav-item logout"
-            onClick={handleLogout}
+            onClick={() => void handleLogout()}
           >
             <span className="nav-icon">
               <Icon name="logout" size={17} />
             </span>
-
-            <span className="nav-label">
-              Cerrar Sesión
-            </span>
+            <span className="nav-label">Cerrar Sesión</span>
           </button>
-
         </div>
       </aside>
 
-
-      {/* =========================================
-          MAIN AREA
-      ========================================== */}
       <div className="main-area">
-
-        {/* =========================================
-            TOP HEADER
-        ========================================== */}
-<header className="dashboard-header relative flex h-17.5 items-center justify-between px-8">
-  
-  {/* 1. BUSCADOR CENTRADO (Hijo directo del header con absolute) */}
-  <div className="absolute left-1/2 w-300.5 -translate-x-1/2">
-    <div className="relative">
-      
-
-
-      <input
-        type="text"
-        placeholder="Buscar cursos..."
-        aria-label="Buscar cursos"
-        value={searchTerm}
-        onChange={(event) => setSearchTerm(event.target.value)}
-        className="w-full rounded-lg border border-cyan-400/20 bg-[#0B1220] py-2 pl-9 pr-3 text-sm text-slate-200 outline-none placeholder:text-slate-500 focus:border-cyan-400/50"
-      />
-
-    </div>
-  </div>
-
-  {/* 2. ESPACIADOR VACÍO A LA IZQUIERDA (Para equilibrar el flexbox) */}
-  <div></div>
-
-  {/* 3. PERFIL Y NOTIFICACIONES (A la derecha gracias a justify-between) */}
-  <div className="flex items-center gap-4 ml-auto !important "> 
-    
-    {/* NOTIFICATIONS */}
-    <button
-      type="button"
-      className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-800 hover:text-cyan-400"
-      aria-label="Notificaciones"
-    >
-      <Icon name="bell" size={17} />
-    </button>
-
-    {/* PROFILE */}
-    <div ref={userMenuRef} className="user-menu">
-      <button
-        type="button"
-        className="user-menu-trigger"
-        onClick={() => setIsUserMenuOpen((isOpen) => !isOpen)}
-        aria-expanded={isUserMenuOpen}
-        aria-haspopup="true"
-        aria-controls="user-menu-dropdown"
-      >
-      <div className="text-sm font-medium text-slate-200">
-        {displayName}
-      </div>
-
-      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-500/20 font-semibold text-cyan-400">
-        {displayName.charAt(0).toUpperCase()}
-      </div>
-      </button>
-
-      {isUserMenuOpen && (
-        <div id="user-menu-dropdown" className="user-menu-dropdown" role="region" aria-label="Información del usuario">
-          <p className="user-menu-name">{displayName}</p>
-          <p className="user-menu-email">{displayEmail}</p>
-          <div className="user-menu-divider" />
-          <p className="user-menu-role-label">Rol</p>
-          <span className="user-menu-role">{displayRole}</span>
-        </div>
-      )}
-    </div>
-
-    <div>
-    </div>
-
-  </div>
-
-</header>
-
-
-        {/* =========================================
-            CONTENT
-        ========================================== */}
-        <main className="content">
-
-          {active === 'categories' ? (
-            <CategoriesPage />
-          ) : active === 'settings' ? (
-            <PerfilPage />
-          ) : areaPlaceholder ? (
-            <section className="area-placeholder">
-              <h1>{areaPlaceholder.title}</h1>
-              <p className="greeting-sub">{areaPlaceholder.description}</p>
-            </section>
-          ) : (
-            <>
-
-          {/* GREETING */}
-          <section className="greeting">
-
-            <h1>
-              ¡Hola, {user?.nombre || 'Estudiante'}!
-            </h1>
-
-            <p className="greeting-sub">
-              {areaLabel} · Tienes un excelente avance esta semana.
-              Sigue así y completa tus metas.
-            </p>
-
-          </section>
-
-
-          {/* =========================================
-              STATISTICS
-          ========================================== */}
-          <section className="stats-row">
-
-            <div className="stat-card">
-
-              <div className="stat-icon">
-                <Icon name="book" size={18} />
-              </div>
-
-              <div className="stat-content">
-
-                <div className="stat-meta">
-                  Cursos en Progreso
-                </div>
-
-                <div className="stat-value">
-                  {stats.inProgress}
-                </div>
-
-              </div>
-
-            </div>
-
-
-            <div className="stat-card">
-
-              <div className="stat-icon">
-                <Icon name="award" size={18} />
-              </div>
-
-              <div className="stat-content">
-
-                <div className="stat-meta">
-                  Certificados Obtenidos
-                </div>
-
-                <div className="stat-value">
-                  {stats.certificates}
-                </div>
-
-              </div>
-
-            </div>
-
-
-            <div className="stat-card">
-
-              <div className="stat-icon">
-                <Icon name="clock" size={18} />
-              </div>
-
-              <div className="stat-content">
-
-                <div className="stat-meta">
-                  Horas de Estudio
-                </div>
-
-                <div className="stat-value">
-                  {stats.hours} hrs
-                </div>
-
-              </div>
-
-            </div>
-
-          </section>
-
-
-          {/* =========================================
-              CONTINUAR APRENDIENDO
-          ========================================== */}
-          <section
-            id="continuar-aprendiendo"
-            className="continue-section"
+        <header className="dashboard-header relative flex h-17.5 items-center justify-between gap-3 px-4 sm:px-8">
+          <button
+            type="button"
+            className="sidebar-toggle"
+            aria-label="Abrir menú"
+            aria-expanded={isSidebarOpen}
+            aria-controls="dashboard-sidebar"
+            onClick={() => setIsSidebarOpen((open) => !open)}
           >
+            <Icon name="menu" size={20} />
+          </button>
 
-            <div className="section-heading">
+          <div className="header-search grow max-w-xl">
+            <input
+              type="text"
+              placeholder="Buscar cursos..."
+              aria-label="Buscar cursos"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              className="w-full rounded-lg border border-cyan-400/20 bg-[#0B1220] py-2 pl-3 pr-3 text-sm text-slate-200 outline-none placeholder:text-slate-500 focus:border-cyan-400/50"
+            />
+          </div>
 
-              <h3>
-                Continuar Aprendiendo
-              </h3>
+          <div className="flex items-center gap-3 ml-auto">
+            <button
+              type="button"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-800 hover:text-cyan-400"
+              aria-label="Notificaciones"
+            >
+              <Icon name="bell" size={17} />
+            </button>
 
-            </div>
-
-
-            <div className="courses-grid">
-
-              {coursePermissions.viewCourse && filteredCourses.length > 0 ? (
-
-                filteredCourses.map((course) => (
-
-                  <article
-                    key={course.id}
-                    className="course-card"
-                  >
-
-                    {/* COURSE IMAGE */}
-                    <div className="course-image-wrapper">
-
-                      <img
-                        src={course.image}
-                        alt={course.title}
-                        className="course-image"
-                      />
-
-                    </div>
-
-
-                    {/* COURSE CONTENT */}
-                    <div className="course-body">
-
-                      <div className="course-category">
-                        {course.category}
-                      </div>
-
-                      <h4 className="course-title">
-                        {course.title}
-                      </h4>
-
-                      <div className="course-teacher">
-                        Por {course.teacher}
-                      </div>
-
-
-                      {/* PROGRESS */}
-                      <div className="progress-row">
-
-                        <div className="progress-container">
-
-                          <div className="progress-label">
-                            Progreso
-                          </div>
-
-                          <div className="progress-bar">
-
-                            <div
-                              className="progress-fill"
-                              style={{
-                                width: `${course.progress}%`,
-                              }}
-                            />
-
-                          </div>
-
-                        </div>
-
-                        <div className="progress-percent">
-                          {course.progress}%
-                        </div>
-
-                      </div>
-
-
-                      {/* CONTINUE */}
-                      <button
-                        type="button"
-                        className="continue-btn"
-                        onClick={() =>
-                          handleContinue(course.id)
-                        }
-                      >
-                        <span>
-                          Continuar
-                        </span>
-
-                        <Icon
-                          name="arrow"
-                          size={15}
-                        />
-                      </button>
-
-                    </div>
-
-                  </article>
-
-                ))
-
-              ) : coursePermissions.viewCourse ? (
-
-                <div className="no-courses">
-                  No se encontraron cursos.
+            <div ref={userMenuRef} className="user-menu">
+              <button
+                type="button"
+                className="user-menu-trigger"
+                onClick={() => setIsUserMenuOpen((isOpen) => !isOpen)}
+                aria-expanded={isUserMenuOpen}
+                aria-haspopup="true"
+                aria-controls="user-menu-dropdown"
+              >
+                <div className="user-menu-name-desktop text-sm font-medium text-slate-200">
+                  {displayName}
                 </div>
-
-              ) : (
-
-                <div className="no-courses" role="alert">
-                  <strong>Acceso no permitido</strong>
-                  <span>No tienes permisos para realizar esta acción.</span>
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-500/20 font-semibold text-cyan-400">
+                  {displayName.charAt(0).toUpperCase()}
                 </div>
+              </button>
 
+              {isUserMenuOpen && (
+                <div
+                  id="user-menu-dropdown"
+                  className="user-menu-dropdown"
+                  role="region"
+                  aria-label="Información del usuario"
+                >
+                  <p className="user-menu-name">{displayName}</p>
+                  <p className="user-menu-email">{displayEmail}</p>
+                  <div className="user-menu-divider" />
+                  <p className="user-menu-role-label">Rol</p>
+                  <span className="user-menu-role">{displayRole}</span>
+                </div>
               )}
-
-              {courseAccessMessage && (
-                <p className="course-access-message" role="alert">{courseAccessMessage}</p>
-              )}
-
             </div>
+          </div>
+        </header>
 
-          </section>
-
-            </>
-          )}
-
-        </main>
-
+        <main className="content">{renderMainContent()}</main>
       </div>
-
     </div>
   );
 };
